@@ -2,6 +2,34 @@
 
 A free, hosted API for testing Indian E-Invoicing system with complete validations.
 
+---
+
+## ⚠️ IMPORTANT DISCLAIMER
+
+**THIS IS A TESTING/DEVELOPMENT API ONLY**
+
+### 🚫 CRITICAL NOTES:
+
+1. **NOT FOR PRODUCTION USE**: This API is for **testing and development purposes only**
+2. **NOT A REPLACEMENT**: Do **NOT** use this as a replacement for the official GST e-Invoice system
+3. **MOCK DATA**: All IRNs, QR codes, and validations are **simulated** and **not legally valid**
+4. **NO LEGAL VALIDITY**: Generated e-Invoices have **no legal standing** for tax purposes
+5. **TESTING ONLY**: Use this API only to test your integration before moving to production
+
+### ✅ Intended Use Cases:
+- Testing your application's E-Invoice integration
+- Understanding the E-Invoice JSON structure
+- Developing and debugging your E-Invoice implementation
+- Learning how the E-Invoice system works
+
+### ❌ Not For:
+- Generating actual tax invoices
+- Legal compliance purposes
+- Production GST filing
+- Official business transactions
+
+---
+
 ## 🌐 Live API URL
 `https://e-invoice-api.vercel.app`
 
@@ -11,7 +39,7 @@ A free, hosted API for testing Indian E-Invoicing system with complete validatio
 |--------|----------|-------------|
 | `GET` | `/` | API information |
 | `GET` | `/health` | Health check |
-| `POST` | `/api/e-invoice/generate` | Generate E-Invoice |
+| `POST` | `/api/e-invoice/generate` | Generate E-Invoice (Test) |
 | `POST` | `/api/e-invoice/validate` | Validate invoice data |
 | `POST` | `/api/e-invoice/cancel` | Cancel invoice |
 | `GET` | `/api/e-invoice/invoices` | List all invoices |
@@ -20,7 +48,7 @@ A free, hosted API for testing Indian E-Invoicing system with complete validatio
 
 ## 🚀 Quick Start
 
-### Generate E-Invoice
+### Generate Test E-Invoice
 ```bash
 curl -X POST https://e-invoice-api.vercel.app/api/e-invoice/generate \
   -H "Content-Type: application/json" \
