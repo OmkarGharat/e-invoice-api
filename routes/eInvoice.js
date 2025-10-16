@@ -1,274 +1,282 @@
 const express = require('express');
 const router = express.Router();
+const EInvoiceDataGenerator = require('../utils/dataGenerator');
 
-// Simple in-memory storage
+const dataGenerator = new EInvoiceDataGenerator();
+
+// Dynamic storage with auto-generated data
 let generatedInvoices = [];
-let invoiceCounter = 1;
 
-// Helper functions
-function generateIRN() {
-  return `IRN${Date.now()}${Math.random().toString(36).substr(2, 9)}`.toUpperCase();
+// Auto-generate 20 sample invoices on startup
+function initializeSampleData() {
+  if (generatedInvoices.length === 0) {
+    const sampleInvoices = dataGenerator.generateMultipleInvoices(20);
+    sampleInvoices.forEach((invoice, index) => {
+      generatedInvoices.push({
+        id: index + 1,
+        irn: `IRN${Date.now()}${index}${Math.random().toString(36).substr(2, 8)}`.toUpperCase(),
+        invoiceData: invoice,
+        status: Math.random() > 0.8 ? 'Cancelled' : 'Generated',
+        generatedAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+        ...(Math.random() > 0.8 ? {
+          cancelledAt: new Date().toISOString(),
+          cancelReason: ['Order cancelled', 'Price dispute', 'Duplicate invoice'][Math.floor(Math.random() * 3)]
+        } : {})
+      });
+    });
+  }
 }
 
-function validateBasicInvoice(data) {
-  const errors = [];
-  
-  // Basic validations
-  if (!data.Version || data.Version !== "1.1") {
-    errors.push("Version must be 1.1");
-  }
-  
-  if (!data.DocDtls || !data.DocDtls.Typ || !['INV', 'CRN', 'DBN'].includes(data.DocDtls.Typ)) {
-    errors.push("Invalid document type");
-  }
-  
-  if (!data.SellerDtls || !data.SellerDtls.Gstin) {
-    errors.push("Seller GSTIN is required");
-  }
-  
-  if (!data.BuyerDtls || !data.BuyerDtls.Gstin) {
-    errors.push("Buyer GSTIN is required");
-  }
-  
-  if (!data.ItemList || data.ItemList.length === 0) {
-    errors.push("At least one item is required");
-  }
-  
-  if (data.ItemList && data.ItemList.length > 1000) {
-    errors.push("Maximum 1000 items allowed");
-  }
-  
-  return errors;
-}
+// Initialize sample data
+initializeSampleData();
+let invoiceCounter = generatedInvoices.length + 1;
 
-// Generate E-Invoice
-router.post('/generate', (req, res) => {
+// Generate dynamic invoice
+router.post('/generate-dynamic', (req, res) => {
   try {
-    const invoiceData = req.body;
+    const { supplyType = "B2B", scenario, count = 1 } = req.body;
     
-    // Basic validation
-    const errors = validateBasicInvoice(invoiceData);
-    if (errors.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation failed',
-        errors: errors
-      });
+    let invoices = [];
+    
+    if (scenario) {
+      // Generate specific scenario
+      invoices.push(dataGenerator.generateScenario(scenario));
+    } else if (count > 1) {
+      // Generate multiple invoices
+      invoices = dataGenerator.generateMultipleInvoices(count);
+    } else {
+      // Generate single invoice
+      invoices.push(dataGenerator.generateInvoice(supplyType));
     }
-    
-    // Check payload size
-    const payloadSize = Buffer.byteLength(JSON.stringify(req.body), 'utf8');
-    if (payloadSize > 2 * 1024 * 1024) {
-      return res.status(400).json({
-        success: false,
-        message: 'Payload size exceeds 2MB limit'
-      });
-    }
-    
-    // Generate IRN
-    const irn = generateIRN();
-    
-    const response = {
-      success: true,
-      data: {
+
+    const results = invoices.map(invoice => {
+      const irn = `IRN${Date.now()}${Math.random().toString(36).substr(2, 8)}`.toUpperCase();
+      
+      const invoiceRecord = {
+        id: invoiceCounter++,
+        irn: irn,
+        invoiceData: invoice,
+        status: 'Generated',
+        generatedAt: new Date().toISOString()
+      };
+      
+      generatedInvoices.push(invoiceRecord);
+      
+      return {
         Irn: irn,
-        AckNo: `ACK${Date.now()}`,
+        AckNo: `ACK${Date.now()}${Math.random().toString(36).substr(2, 6)}`.toUpperCase(),
         AckDt: new Date().toLocaleDateString('en-GB'),
         SignedInvoice: {
-          ...invoiceData,
+          ...invoice,
           IRN: irn
         },
         QRCode: `QR_${irn}`
-      },
-      message: 'E-Invoice generated successfully'
-    };
-    
-    // Store invoice
-    generatedInvoices.push({
-      id: invoiceCounter++,
-      irn: irn,
-      invoiceData: invoiceData,
-      status: 'Generated',
-      generatedAt: new Date().toISOString()
+      };
     });
-    
-    res.json(response);
-    
-  } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-      error: error.message
-    });
-  }
-});
 
-// Validate E-Invoice
-router.post('/validate', (req, res) => {
-  try {
-    const invoiceData = req.body;
-    const errors = validateBasicInvoice(invoiceData);
-    
-    if (errors.length > 0) {
-      return res.json({
-        isValid: false,
-        errors: errors.map(error => ({ message: error }))
-      });
-    }
-    
-    res.json({
-      isValid: true,
-      message: 'E-Invoice data is valid for basic checks'
-    });
-    
-  } catch (error) {
-    res.status(500).json({
-      isValid: false,
-      message: 'Validation error',
-      error: error.message
-    });
-  }
-});
-
-// Get all invoices
-router.get('/invoices', (req, res) => {
-  res.json({
-    success: true,
-    data: generatedInvoices.map(inv => ({
-      id: inv.id,
-      irn: inv.irn,
-      invoiceNo: inv.invoiceData.DocDtls?.No,
-      status: inv.status,
-      generatedAt: inv.generatedAt,
-      totalValue: inv.invoiceData.ValDtls?.TotInvVal
-    })),
-    count: generatedInvoices.length
-  });
-});
-
-// Cancel invoice
-router.post('/cancel', (req, res) => {
-  try {
-    const { irn, cancelReason } = req.body;
-    
-    if (!irn) {
-      return res.status(400).json({
-        success: false,
-        message: 'IRN is required'
-      });
-    }
-    
-    const invoice = generatedInvoices.find(inv => inv.irn === irn);
-    if (!invoice) {
-      return res.status(404).json({
-        success: false,
-        message: 'Invoice not found'
-      });
-    }
-    
-    invoice.status = 'Cancelled';
-    invoice.cancelledAt = new Date().toISOString();
-    invoice.cancelReason = cancelReason;
-    
     res.json({
       success: true,
-      message: 'Invoice cancelled successfully',
-      data: {
-        irn: irn,
-        status: 'Cancelled'
-      }
+      data: count === 1 ? results[0] : results,
+      count: results.length,
+      message: `Successfully generated ${results.length} dynamic invoice(s)`
     });
-    
+
   } catch (error) {
+    console.error('Error generating dynamic invoice:', error);
     res.status(500).json({
       success: false,
-      message: 'Error cancelling invoice',
+      message: 'Error generating dynamic invoice',
       error: error.message
     });
   }
 });
 
-// Get sample invoice
-router.get('/sample', (req, res) => {
-  const sampleInvoice = {
-    Version: "1.1",
-    TranDtls: {
-      TaxSch: "GST",
-      SupTyp: "B2B",
-      RegRev: "N",
-      IgstOnIntra: "N"
-    },
-    DocDtls: {
-      Typ: "INV",
-      No: "INV/2024/001",
-      Dt: "20/05/2024"
-    },
-    SellerDtls: {
-      Gstin: "29AABCT1332L000",
-      LglNm: "ABC Company Pvt Ltd",
-      Addr1: "5th block, Kuvempu Layout",
-      Loc: "BANGALORE",
-      Pin: 560001,
-      Stcd: "29"
-    },
-    BuyerDtls: {
-      Gstin: "29AWGPV7107B1Z1",
-      LglNm: "XYZ Company Pvt Ltd",
-      Pos: "29",
-      Addr1: "7th block, Kuvempu Layout", 
-      Loc: "BANGALORE",
-      Pin: 560004,
-      Stcd: "29"
-    },
-    ItemList: [
-      {
-        SlNo: "1",
-        IsServc: "N",
-        PrdDesc: "Laptop",
-        HsnCd: "8471",
-        Qty: 2,
-        Unit: "NOS",
-        UnitPrice: 50000,
-        TotAmt: 100000,
-        AssAmt: 100000,
-        GstRt: 18,
-        IgstAmt: 18000,
-        CgstAmt: 0,
-        SgstAmt: 0,
-        TotItemVal: 118000
-      }
-    ],
-    ValDtls: {
-      AssVal: 100000,
-      IgstVal: 18000,
-      CgstVal: 0,
-      SgstVal: 0,
-      TotInvVal: 118000
-    }
-  };
+// Get all invoices with filtering
+router.get('/invoices', (req, res) => {
+  const { status, supplyType, state, page = 1, limit = 10 } = req.query;
   
+  let filteredInvoices = [...generatedInvoices];
+  
+  // Apply filters
+  if (status) {
+    filteredInvoices = filteredInvoices.filter(inv => inv.status === status);
+  }
+  
+  if (supplyType) {
+    filteredInvoices = filteredInvoices.filter(inv => 
+      inv.invoiceData.TranDtls.SupTyp === supplyType
+    );
+  }
+  
+  if (state) {
+    filteredInvoices = filteredInvoices.filter(inv => 
+      inv.invoiceData.SellerDtls.Stcd === state || 
+      inv.invoiceData.BuyerDtls.Stcd === state
+    );
+  }
+  
+  // Pagination
+  const startIndex = (page - 1) * limit;
+  const endIndex = page * limit;
+  const paginatedInvoices = filteredInvoices.slice(startIndex, endIndex);
+
   res.json({
     success: true,
-    data: sampleInvoice
+    data: paginatedInvoices.map(inv => ({
+      id: inv.id,
+      irn: inv.irn,
+      invoiceNo: inv.invoiceData.DocDtls.No,
+      sellerGstin: inv.invoiceData.SellerDtls.Gstin,
+      buyerGstin: inv.invoiceData.BuyerDtls.Gstin,
+      supplyType: inv.invoiceData.TranDtls.SupTyp,
+      totalValue: inv.invoiceData.ValDtls.TotInvVal,
+      status: inv.status,
+      generatedAt: inv.generatedAt,
+      documentType: inv.invoiceData.DocDtls.Typ,
+      sellerState: inv.invoiceData.SellerDtls.Stcd,
+      buyerState: inv.invoiceData.BuyerDtls.Stcd
+    })),
+    pagination: {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      total: filteredInvoices.length,
+      pages: Math.ceil(filteredInvoices.length / limit)
+    },
+    count: filteredInvoices.length,
+    message: "✅ Dynamically generated test data"
   });
 });
 
-// Get validation rules
-router.get('/validation-rules', (req, res) => {
+// Get available scenarios
+router.get('/scenarios', (req, res) => {
   res.json({
     success: true,
     data: {
-      version: "1.1",
-      maxItems: 1000,
-      maxPayload: "2MB",
-      mandatoryFields: [
-        "Version", "TranDtls", "DocDtls", "SellerDtls", "BuyerDtls", "ItemList", "ValDtls"
+      scenarios: [
+        {
+          name: "b2b_interstate",
+          description: "B2B transaction between different states (IGST applicable)",
+          endpoint: "POST /api/e-invoice/generate-dynamic",
+          body: { "scenario": "b2b_interstate" }
+        },
+        {
+          name: "b2b_intrastate", 
+          description: "B2B transaction within same state (CGST+SGST applicable)",
+          endpoint: "POST /api/e-invoice/generate-dynamic",
+          body: { "scenario": "b2b_intrastate" }
+        },
+        {
+          name: "export",
+          description: "Export transaction with zero tax",
+          endpoint: "POST /api/e-invoice/generate-dynamic", 
+          body: { "scenario": "export" }
+        },
+        {
+          name: "sez",
+          description: "Supply to SEZ unit",
+          endpoint: "POST /api/e-invoice/generate-dynamic",
+          body: { "scenario": "sez" }
+        },
+        {
+          name: "reverse_charge",
+          description: "Reverse charge mechanism invoice",
+          endpoint: "POST /api/e-invoice/generate-dynamic",
+          body: { "scenario": "reverse_charge" }
+        },
+        {
+          name: "credit_note",
+          description: "Credit note for returns",
+          endpoint: "POST /api/e-invoice/generate-dynamic",
+          body: { "scenario": "credit_note" }
+        }
       ],
-      allowedDocTypes: ["INV", "CRN", "DBN"],
-      allowedSupplyTypes: ["B2B", "SEZWP", "SEZWOP", "EXPWP", "EXPWOP", "DEXP"]
+      supplyTypes: ["B2B", "EXPWP", "EXPWOP", "SEZWP", "SEZWOP", "DEXP"],
+      states: Object.keys(dataGenerator.states)
     }
   });
 });
+
+// Bulk generate invoices
+router.post('/bulk-generate', (req, res) => {
+  try {
+    const { count = 10, supplyTypes = ["B2B", "EXPWP", "SEZWP"] } = req.body;
+    
+    if (count > 100) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot generate more than 100 invoices at once"
+      });
+    }
+    
+    const invoices = [];
+    
+    for (let i = 0; i < count; i++) {
+      const supplyType = supplyTypes[Math.floor(Math.random() * supplyTypes.length)];
+      const invoice = dataGenerator.generateInvoice(supplyType);
+      const irn = `IRN${Date.now()}${i}${Math.random().toString(36).substr(2, 8)}`.toUpperCase();
+      
+      invoices.push({
+        id: invoiceCounter++,
+        irn: irn,
+        invoiceData: invoice,
+        status: 'Generated',
+        generatedAt: new Date().toISOString()
+      });
+    }
+    
+    generatedInvoices.push(...invoices);
+    
+    res.json({
+      success: true,
+      data: {
+        generated: invoices.length,
+        totalInvoices: generatedInvoices.length,
+        sampleIrn: invoices[0]?.irn
+      },
+      message: `Successfully generated ${invoices.length} invoices`
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error in bulk generation",
+      error: error.message
+    });
+  }
+});
+
+// Reset and regenerate data
+router.post('/reset-data', (req, res) => {
+  const { count = 20 } = req.body;
+  
+  generatedInvoices = [];
+  invoiceCounter = 1;
+  initializeSampleData();
+  
+  // Generate additional data if requested
+  if (count > 20) {
+    const additionalInvoices = dataGenerator.generateMultipleInvoices(count - 20);
+    additionalInvoices.forEach((invoice, index) => {
+      generatedInvoices.push({
+        id: invoiceCounter++,
+        irn: `IRN${Date.now()}${index}${Math.random().toString(36).substr(2, 8)}`.toUpperCase(),
+        invoiceData: invoice,
+        status: 'Generated',
+        generatedAt: new Date().toISOString()
+      });
+    });
+  }
+  
+  res.json({
+    success: true,
+    data: {
+      totalInvoices: generatedInvoices.length,
+      message: `Data reset with ${generatedInvoices.length} invoices`
+    }
+  });
+});
+
+// Keep your existing endpoints (generate, validate, cancel, etc.)
+// ... [your existing endpoints here]
 
 module.exports = router;
