@@ -1,5 +1,3 @@
-const { MASTERS } = require('../validation/eInvoiceValidation');
-
 class EInvoiceDataGenerator {
   constructor() {
     this.states = {
@@ -53,7 +51,10 @@ class EInvoiceDataGenerator {
   generateDate() {
     const date = new Date();
     date.setDate(date.getDate() - Math.floor(Math.random() * 90));
-    return date.toLocaleDateString('en-GB');
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
   }
 
   generateAddress(stateCode) {
@@ -92,14 +93,11 @@ class EInvoiceDataGenerator {
     
     const totItemVal = assAmt + igstAmt + cgstAmt + sgstAmt;
 
-    return {
+    const item = {
       SlNo: slNo.toString(),
       IsServc: isService ? "Y" : "N",
       PrdDesc: product.name,
       HsnCd: product.hsn,
-      BchDtls: isService ? undefined : { Nm: `BATCH${Math.floor(Math.random() * 1000) + 1}` },
-      Qty: isService ? undefined : parseFloat(qty.toFixed(3)),
-      Unit: isService ? undefined : this.getUnit(product.category),
       UnitPrice: parseFloat(unitPrice.toFixed(2)),
       TotAmt: parseFloat(totAmt.toFixed(2)),
       AssAmt: parseFloat(assAmt.toFixed(2)),
@@ -109,6 +107,14 @@ class EInvoiceDataGenerator {
       SgstAmt: parseFloat(sgstAmt.toFixed(2)),
       TotItemVal: parseFloat(totItemVal.toFixed(2))
     };
+
+    if (!isService) {
+      item.BchDtls = { Nm: `BATCH${Math.floor(Math.random() * 1000) + 1}` };
+      item.Qty = parseFloat(qty.toFixed(3));
+      item.Unit = this.getUnit(product.category);
+    }
+
+    return item;
   }
 
   getUnit(category) {
@@ -262,11 +268,6 @@ class EInvoiceDataGenerator {
       "reverse_charge": () => {
         const invoice = this.generateInvoice("B2B");
         invoice.TranDtls.RegRev = "Y";
-        return invoice;
-      },
-      "credit_note": () => {
-        const invoice = this.generateInvoice("B2B");
-        invoice.DocDtls.Typ = "CRN";
         return invoice;
       }
     };
