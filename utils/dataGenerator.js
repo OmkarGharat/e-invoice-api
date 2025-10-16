@@ -35,7 +35,6 @@ class EInvoiceDataGenerator {
     ];
   }
 
-  // Generate random GSTIN for a state
   generateGSTIN(stateCode) {
     const randomChars = () => Math.random().toString(36).toUpperCase().substr(2, 3);
     const randomNumber = () => Math.floor(Math.random() * 10);
@@ -43,7 +42,6 @@ class EInvoiceDataGenerator {
     return `${stateCode}${Array.from({length: 10}, () => randomNumber()).join('')}${randomChars()}${randomNumber()}`;
   }
 
-  // Generate company name
   generateCompanyName() {
     const company = this.companies[Math.floor(Math.random() * this.companies.length)];
     const industry = this.industries[Math.floor(Math.random() * this.industries.length)];
@@ -52,14 +50,12 @@ class EInvoiceDataGenerator {
     return `${company} ${industry} ${suffix}`;
   }
 
-  // Generate random date within last 90 days
   generateDate() {
     const date = new Date();
     date.setDate(date.getDate() - Math.floor(Math.random() * 90));
     return date.toLocaleDateString('en-GB');
   }
 
-  // Generate address for state
   generateAddress(stateCode) {
     const state = this.states[stateCode];
     const streetNames = ["Main Road", "Gandhi Street", "Market Area", "Industrial Estate", "Tech Park"];
@@ -74,7 +70,6 @@ class EInvoiceDataGenerator {
     };
   }
 
-  // Generate product item
   generateProductItem(slNo, isInterState = false) {
     const product = this.products[Math.floor(Math.random() * this.products.length)];
     const isService = product.name.includes("Service");
@@ -83,18 +78,16 @@ class EInvoiceDataGenerator {
     const totAmt = qty * unitPrice;
     const assAmt = totAmt;
     
-    // Select appropriate tax rate
     const taxRates = isService ? [0, 5, 12, 18] : [0, 5, 12, 18, 28];
     const gstRt = taxRates[Math.floor(Math.random() * taxRates.length)];
     
-    // Calculate taxes
     let igstAmt = 0, cgstAmt = 0, sgstAmt = 0;
     
     if (isInterState || gstRt === 0) {
       igstAmt = (assAmt * gstRt) / 100;
     } else {
-      cgstAmt = (assAmt * gstRt) / 200; // Half rate for CGST
-      sgstAmt = (assAmt * gstRt) / 200; // Half rate for SGST
+      cgstAmt = (assAmt * gstRt) / 200;
+      sgstAmt = (assAmt * gstRt) / 200;
     }
     
     const totItemVal = assAmt + igstAmt + cgstAmt + sgstAmt;
@@ -132,16 +125,13 @@ class EInvoiceDataGenerator {
     return units[category] || "NOS";
   }
 
-  // Generate complete invoice based on supply type
   generateInvoice(supplyType = "B2B") {
     let sellerState, buyerState, buyerGstin, pos;
     
-    // Determine states based on supply type
     const stateCodes = Object.keys(this.states);
     
     switch(supplyType) {
       case "B2B":
-        // Random states, could be same or different
         sellerState = stateCodes[Math.floor(Math.random() * stateCodes.length)];
         buyerState = Math.random() > 0.5 ? sellerState : stateCodes[Math.floor(Math.random() * stateCodes.length)];
         buyerGstin = this.generateGSTIN(buyerState);
@@ -175,20 +165,17 @@ class EInvoiceDataGenerator {
     const sellerAddress = this.generateAddress(sellerState);
     const buyerAddress = this.generateAddress(buyerState);
     
-    // Override buyer address for special cases
     if (supplyType.includes("EXP") || supplyType.includes("SEZ")) {
       buyerAddress.Loc = "PORT AREA";
       buyerAddress.Pin = 999999;
       buyerAddress.Stcd = "96";
     }
 
-    // Generate items (1-5 items per invoice)
     const itemCount = Math.floor(Math.random() * 5) + 1;
     const itemList = Array.from({length: itemCount}, (_, i) => 
       this.generateProductItem(i + 1, isInterState)
     );
 
-    // Calculate value details
     const valDtls = this.calculateValueDetails(itemList);
 
     return {
@@ -246,7 +233,6 @@ class EInvoiceDataGenerator {
     };
   }
 
-  // Generate multiple invoices
   generateMultipleInvoices(count = 10) {
     const supplyTypes = ["B2B", "EXPWP", "SEZWP"];
     const invoices = [];
@@ -259,7 +245,6 @@ class EInvoiceDataGenerator {
     return invoices;
   }
 
-  // Generate specific scenario
   generateScenario(scenarioType) {
     const scenarios = {
       "b2b_interstate": () => {
