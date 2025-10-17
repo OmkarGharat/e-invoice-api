@@ -1,4 +1,3 @@
-```markdown
 # 🧾 E-Invoice Test API
 
 A comprehensive, free testing API for Indian E-Invoicing system with beautiful dark-themed documentation and realistic sample data.
@@ -6,6 +5,35 @@ A comprehensive, free testing API for Indian E-Invoicing system with beautiful d
 ![API Status](https://img.shields.io/badge/Status-Online-brightgreen)
 ![Version](https://img.shields.io/badge/Version-2.0.0-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
+
+---
+
+## ⚠️ IMPORTANT DISCLAIMER
+
+**THIS IS A TESTING/DEVELOPMENT API ONLY**
+
+### 🚫 CRITICAL NOTES:
+
+1. **NOT FOR PRODUCTION USE**: This API is for **testing and development purposes only**
+2. **NOT A REPLACEMENT**: Do **NOT** use this as a replacement for the official GST e-Invoice system
+3. **MOCK DATA**: All IRNs, QR codes, and validations are **simulated** and **not legally valid**
+4. **NO LEGAL VALIDITY**: Generated e-Invoices have **no legal standing** for tax purposes
+5. **TESTING ONLY**: Use this API only to test your integration before moving to production
+
+### ✅ Intended Use Cases:
+- Testing your application's E-Invoice integration
+- Understanding the E-Invoice JSON structure
+- Developing and debugging your E-Invoice implementation
+- Learning how the E-Invoice system works
+
+### ❌ Not For:
+- Generating actual tax invoices
+- Legal compliance purposes
+- Production GST filing
+- Official business transactions
+
+---
+
 
 ## 🌐 Live API
 
@@ -116,157 +144,3 @@ curl -X POST https://e-invoice-api.vercel.app/api/e-invoice/generate \
       "TotInvVal": 11800
     }
   }'
-```
-
-### Get Sample Invoice
-```bash
-curl https://e-invoice-api.vercel.app/api/e-invoice/sample/1
-```
-
-### Validate Invoice Data
-```bash
-curl -X POST https://e-invoice-api.vercel.app/api/e-invoice/validate \
-  -H "Content-Type: application/json" \
-  -d '{
-    "Version": "1.1",
-    "TranDtls": {
-      "TaxSch": "GST",
-      "SupTyp": "B2B"
-    }
-    // ... your invoice data
-  }'
-```
-
-### Generate Multiple Invoices
-```bash
-curl -X POST https://e-invoice-api.vercel.app/api/e-invoice/generate-dynamic \
-  -H "Content-Type: application/json" \
-  -d '{
-    "count": 5,
-    "sampleId": 2
-  }'
-```
-
-## 🎯 Response Format
-
-### Success Response
-```json
-{
-  "success": true,
-  "data": {
-    "Irn": "IRN1234567890123456789012345678901234567890",
-    "AckNo": "ACK1234567890",
-    "AckDt": "20/05/2024",
-    "SignedInvoice": {
-      // Your invoice data with IRN
-    },
-    "QRCode": "QR_IRN1234567890"
-  },
-  "message": "E-Invoice generated successfully"
-}
-```
-
-### Error Response
-```json
-{
-  "success": false,
-  "message": "Validation failed",
-  "errors": [
-    "Version must be 1.1",
-    "Seller GSTIN is required"
-  ]
-}
-```
-
-## 📊 Supported Supply Types
-
-- **B2B** - Business to Business
-- **EXPWP** - Export with Payment
-- **EXPWOP** - Export without Payment  
-- **SEZWP** - SEZ with Payment
-- **SEZWOP** - SEZ without Payment
-- **DEXP** - Deemed Export
-
-## 🔒 Validation Rules
-
-The API validates:
-- ✅ Version must be "1.1"
-- ✅ Document number format
-- ✅ GSTIN format (15 characters)
-- ✅ HSN code validity
-- ✅ Tax rate compliance
-- ✅ Date format (DD/MM/YYYY)
-- ✅ State code validity
-- ✅ PIN code validation
-- ✅ Tax calculation accuracy
-- ✅ Duplicate prevention
-
-## 🏗️ Project Structure
-
-```
-e-invoice-api/
-├── server.js              # Main Express server
-├── package.json           # Dependencies
-├── vercel.json           # Vercel configuration
-├── public/               # Frontend assets
-│   ├── index.html        # Documentation UI
-│   ├── css/
-│   │   └── style.css     # Custom dark theme
-│   └── js/
-│       └── app.js        # Interactive functionality
-├── utils/
-│   └── dataGenerator.js  # Dynamic data generation
-└── README.md             # This file
-```
-
-## 🚨 Important Notice
-
-**⚠️ THIS IS A TESTING API ONLY**
-
-- All generated IRNs and QR codes are **simulated**
-- Data has **no legal validity** for tax purposes
-- **Do not use** for production GST filing
-- Intended for **development and testing** only
-- Always test with official GST sandbox before production
-
-## 🛠️ Local Development
-
-```bash
-# Clone repository
-git clone https://github.com/your-username/e-invoice-api.git
-cd e-invoice-api
-
-# Install dependencies
-npm install
-
-# Start development server
-npm start
-
-# Access locally
-open http://localhost:3000
-```
-
-## 🌐 Deployment
-
-The API is automatically deployed on Vercel when pushing to the main branch.
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit pull requests or open issues for bugs and feature requests.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 📞 Support
-
-- **API Documentation**: [https://e-invoice-api.vercel.app](https://e-invoice-api.vercel.app)
-- **Report Issues**: [GitHub Issues](https://github.com/your-username/e-invoice-api/issues)
-- **Live Testing**: Use the interactive documentation for immediate testing
-
----
-
-**Built with ❤️ for developers testing E-Invoice integration**
-
-*Happy Testing! 🚀*
-```
