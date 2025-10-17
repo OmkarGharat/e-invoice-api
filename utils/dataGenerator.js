@@ -3,7 +3,9 @@ class EInvoiceDataGenerator {
     this.states = {
       '29': { name: 'Karnataka', capital: 'BANGALORE', pincodes: [560001, 560002, 560003, 560004] },
       '07': { name: 'Delhi', capital: 'NEW DELHI', pincodes: [110001, 110002, 110003, 110004] },
-      '27': { name: 'Maharashtra', capital: 'MUMBAI', pincodes: [400001, 400002, 400003, 400004] }
+      '27': { name: 'Maharashtra', capital: 'MUMBAI', pincodes: [400001, 400002, 400003, 400004] },
+      '33': { name: 'Tamil Nadu', capital: 'CHENNAI', pincodes: [600001, 600002, 600003, 600004] },
+      '36': { name: 'Telangana', capital: 'HYDERABAD', pincodes: [500001, 500002, 500003, 500004] }
     };
 
     this.products = [
@@ -18,6 +20,7 @@ class EInvoiceDataGenerator {
 
   getTestSamples() {
     return {
+      // Sample 1: B2B Intrastate (CGST + SGST)
       1: {
         Version: "1.1",
         TranDtls: { TaxSch: "GST", SupTyp: "B2B", RegRev: "N", IgstOnIntra: "N" },
@@ -39,6 +42,8 @@ class EInvoiceDataGenerator {
         }],
         ValDtls: { AssVal: 375000, CgstVal: 33750, SgstVal: 33750, IgstVal: 0, TotInvVal: 442500 }
       },
+
+      // Sample 2: B2B Interstate (IGST)
       2: {
         Version: "1.1",
         TranDtls: { TaxSch: "GST", SupTyp: "B2B", RegRev: "N", IgstOnIntra: "N" },
@@ -60,6 +65,8 @@ class EInvoiceDataGenerator {
         }],
         ValDtls: { AssVal: 80000, CgstVal: 0, SgstVal: 0, IgstVal: 9600, TotInvVal: 89600 }
       },
+
+      // Sample 3: Export Invoice (Zero Tax)
       3: {
         Version: "1.1",
         TranDtls: { TaxSch: "GST", SupTyp: "EXPWP", RegRev: "N", IgstOnIntra: "N" },
@@ -80,6 +87,110 @@ class EInvoiceDataGenerator {
           GstRt: 0, IgstAmt: 0, CgstAmt: 0, SgstAmt: 0, TotItemVal: 250000
         }],
         ValDtls: { AssVal: 250000, CgstVal: 0, SgstVal: 0, IgstVal: 0, TotInvVal: 250000 }
+      },
+
+      // Sample 4: SEZ Supply
+      4: {
+        Version: "1.1",
+        TranDtls: { TaxSch: "GST", SupTyp: "SEZWP", RegRev: "N", IgstOnIntra: "N" },
+        DocDtls: { Typ: "INV", No: "SEZ/2024/001", Dt: "10/03/2024" },
+        SellerDtls: {
+          Gstin: "27AABCU9603R1ZM", LglNm: "Domestic Supplier Ltd",
+          Addr1: "Commercial Street", Loc: "MUMBAI", Pin: 400001, Stcd: "27",
+          Ph: "9876543215", Em: "contact@domesticsupplier.com"
+        },
+        BuyerDtls: {
+          Gstin: "27SEZ12345678901", LglNm: "SEZ Unit Mumbai", Pos: "96",
+          Addr1: "SEZ Area", Loc: "MUMBAI", Pin: 400001, Stcd: "27",
+          Ph: "9876543216", Em: "sez@sezunit.com"
+        },
+        ItemList: [{
+          SlNo: "1", IsServc: "N", PrdDesc: "Electronic Components", HsnCd: "85429000",
+          Qty: 1000, Unit: "NOS", UnitPrice: 100, TotAmt: 100000, AssAmt: 100000,
+          GstRt: 18, IgstAmt: 18000, CgstAmt: 0, SgstAmt: 0, TotItemVal: 118000
+        }],
+        ValDtls: { AssVal: 100000, CgstVal: 0, SgstVal: 0, IgstVal: 18000, TotInvVal: 118000 }
+      },
+
+      // Sample 5: Reverse Charge
+      5: {
+        Version: "1.1",
+        TranDtls: { TaxSch: "GST", SupTyp: "B2B", RegRev: "Y", IgstOnIntra: "N" },
+        DocDtls: { Typ: "INV", No: "INV/2024/005", Dt: "25/03/2024" },
+        SellerDtls: {
+          Gstin: "29AABCT1332L000", LglNm: "Small Service Provider",
+          Addr1: "Service Road", Loc: "BANGALORE", Pin: 560001, Stcd: "29",
+          Ph: "9876543217", Em: "service@smallprovider.com"
+        },
+        BuyerDtls: {
+          Gstin: "29AWGPV7107B1Z1", LglNm: "Large Manufacturing Co", Pos: "29",
+          Addr1: "Industrial Area", Loc: "BANGALORE", Pin: 560001, Stcd: "29",
+          Ph: "9876543218", Em: "accounts@manufacturing.com"
+        },
+        ItemList: [{
+          SlNo: "1", IsServc: "Y", PrdDesc: "Consulting Services", HsnCd: "998599",
+          Qty: 1, Unit: "NOS", UnitPrice: 50000, TotAmt: 50000, AssAmt: 50000,
+          GstRt: 18, IgstAmt: 0, CgstAmt: 4500, SgstAmt: 4500, TotItemVal: 59000
+        }],
+        ValDtls: { AssVal: 50000, CgstVal: 4500, SgstVal: 4500, IgstVal: 0, TotInvVal: 59000 }
+      },
+
+      // Sample 6: Credit Note
+      6: {
+        Version: "1.1",
+        TranDtls: { TaxSch: "GST", SupTyp: "B2B", RegRev: "N", IgstOnIntra: "N" },
+        DocDtls: { Typ: "CRN", No: "CRN/2024/001", Dt: "30/03/2024" },
+        SellerDtls: {
+          Gstin: "29AABCT1332L000", LglNm: "Original Seller Ltd",
+          Addr1: "Main Road", Loc: "BANGALORE", Pin: 560001, Stcd: "29",
+          Ph: "9876543219", Em: "sales@originalseller.com"
+        },
+        BuyerDtls: {
+          Gstin: "29AWGPV7107B1Z1", LglNm: "Original Buyer Corp", Pos: "29",
+          Addr1: "Trade Center", Loc: "BANGALORE", Pin: 560001, Stcd: "29",
+          Ph: "9876543220", Em: "purchase@buyercorp.com"
+        },
+        ItemList: [{
+          SlNo: "1", IsServc: "N", PrdDesc: "Defective Laptop - Return", HsnCd: "84713000",
+          Qty: 1, Unit: "NOS", UnitPrice: -75000, TotAmt: -75000, AssAmt: -75000,
+          GstRt: 18, IgstAmt: 0, CgstAmt: -6750, SgstAmt: -6750, TotItemVal: -88500
+        }],
+        ValDtls: { AssVal: -75000, CgstVal: -6750, SgstVal: -6750, IgstVal: 0, TotInvVal: -88500 }
+      },
+
+      // Sample 7: Multiple Items
+      7: {
+        Version: "1.1",
+        TranDtls: { TaxSch: "GST", SupTyp: "B2B", RegRev: "N", IgstOnIntra: "N" },
+        DocDtls: { Typ: "INV", No: "INV/2024/007", Dt: "05/04/2024" },
+        SellerDtls: {
+          Gstin: "33AABCT1332L000", LglNm: "Multi Product Traders",
+          Addr1: "Trade Complex", Loc: "CHENNAI", Pin: 600001, Stcd: "33",
+          Ph: "9876543221", Em: "info@multitraders.com"
+        },
+        BuyerDtls: {
+          Gstin: "33AWGPV7107B1Z1", LglNm: "Retail Chain Stores", Pos: "33",
+          Addr1: "Shopping Mall", Loc: "CHENNAI", Pin: 600001, Stcd: "33",
+          Ph: "9876543222", Em: "orders@retailchain.com"
+        },
+        ItemList: [
+          {
+            SlNo: "1", IsServc: "N", PrdDesc: "Office Desk", HsnCd: "94033000",
+            BchDtls: { Nm: "BATCH007A" }, Qty: 10, Unit: "NOS", UnitPrice: 8000, TotAmt: 80000,
+            AssAmt: 80000, GstRt: 12, IgstAmt: 0, CgstAmt: 4800, SgstAmt: 4800, TotItemVal: 89600
+          },
+          {
+            SlNo: "2", IsServc: "N", PrdDesc: "Office Chair", HsnCd: "94013000",
+            BchDtls: { Nm: "BATCH007B" }, Qty: 20, Unit: "NOS", UnitPrice: 3000, TotAmt: 60000,
+            AssAmt: 60000, GstRt: 12, IgstAmt: 0, CgstAmt: 3600, SgstAmt: 3600, TotItemVal: 67200
+          },
+          {
+            SlNo: "3", IsServc: "N", PrdDesc: "LED Bulbs", HsnCd: "85395000",
+            BchDtls: { Nm: "BATCH007C" }, Qty: 100, Unit: "NOS", UnitPrice: 200, TotAmt: 20000,
+            AssAmt: 20000, GstRt: 18, IgstAmt: 0, CgstAmt: 1800, SgstAmt: 1800, TotItemVal: 23600
+          }
+        ],
+        ValDtls: { AssVal: 160000, CgstVal: 10200, SgstVal: 10200, IgstVal: 0, TotInvVal: 180400 }
       }
     };
   }
@@ -88,7 +199,11 @@ class EInvoiceDataGenerator {
     const descriptions = {
       1: "B2B Intrastate (CGST + SGST)",
       2: "B2B Interstate (IGST)", 
-      3: "Export Invoice (Zero Tax)"
+      3: "Export Invoice (Zero Tax)",
+      4: "SEZ Supply",
+      5: "Reverse Charge",
+      6: "Credit Note",
+      7: "Multiple Items"
     };
     return descriptions[id] || "Sample Invoice";
   }
@@ -104,7 +219,6 @@ class EInvoiceDataGenerator {
   }
 
   generateInvoice(supplyType = "B2B") {
-    // Implementation for dynamic invoice generation
     const states = Object.keys(this.states);
     const sellerState = states[Math.floor(Math.random() * states.length)];
     const buyerState = supplyType === "B2B" ? states[Math.floor(Math.random() * states.length)] : sellerState;
