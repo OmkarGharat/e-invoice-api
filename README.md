@@ -1,6 +1,10 @@
-# 🚀 E-Invoice Test API
+# 🧾 E-Invoice Test API
 
-A free, hosted API for testing Indian E-Invoicing system with complete validations.
+A comprehensive, free testing API for Indian E-Invoicing system with beautiful dark-themed documentation and realistic sample data.
+
+![API Status](https://img.shields.io/badge/Status-Online-brightgreen)
+![Version](https://img.shields.io/badge/Version-2.0.0-blue)
+![License](https://img.shields.io/badge/License-MIT-green)
 
 ---
 
@@ -30,25 +34,60 @@ A free, hosted API for testing Indian E-Invoicing system with complete validatio
 
 ---
 
-## 🌐 Live API URL
-`https://e-invoice-api.vercel.app` (coming soon) 😊
 
-## 📋 Endpoints
+## 🌐 Live API
+
+**Base URL:** `https://e-invoice-api.vercel.app`
+
+**Documentation:** [https://e-invoice-api.vercel.app](https://e-invoice-api.vercel.app)
+
+## 🚀 Features
+
+- ✅ **Generate E-Invoices** with auto IRN & QR codes
+- ✅ **Validate Invoice Data** against business rules
+- ✅ **Cancel Invoices** with proper audit trail
+- ✅ **7 Pre-built Samples** covering all scenarios
+- ✅ **Dynamic Data Generation** for unlimited testing
+- ✅ **Beautiful Dark UI** with Bootstrap 5
+- ✅ **Real-time API Testing** directly from browser
+- ✅ **No Authentication Required** - completely free
+- ✅ **Always Online** - hosted on Vercel
+
+## 📚 Available Test Samples
+
+| Sample | Type | Description | Total Value |
+|--------|------|-------------|-------------|
+| #1 | B2B | Intrastate (CGST + SGST) | ₹4,42,500 |
+| #2 | B2B | Interstate (IGST) | ₹89,600 |
+| #3 | EXPWP | Export Invoice (Zero Tax) | ₹2,50,000 |
+| #4 | SEZWP | SEZ Supply | ₹1,18,000 |
+| #5 | B2B | Reverse Charge Mechanism | ₹59,000 |
+| #6 | CRN | Credit Note (Returns) | ₹-88,500 |
+| #7 | B2B | Multiple Items (3 products) | ₹1,80,400 |
+
+## 🔧 API Endpoints
+
+### Core Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/` | API information |
-| `GET` | `/health` | Health check |
-| `POST` | `/api/e-invoice/generate` | Generate E-Invoice (Test) |
+| `GET` | `/health` | API health check |
+| `GET` | `/api/e-invoice/invoices` | List all generated invoices |
+| `GET` | `/api/e-invoice/samples` | List all available samples |
+| `GET` | `/api/e-invoice/sample/:id` | Get specific sample (1-7) |
+| `GET` | `/api/e-invoice/stats` | Get API statistics |
+| `POST` | `/api/e-invoice/generate` | Generate new invoice |
+| `POST` | `/api/e-invoice/generate-dynamic` | Generate dynamic invoices |
 | `POST` | `/api/e-invoice/validate` | Validate invoice data |
-| `POST` | `/api/e-invoice/cancel` | Cancel invoice |
-| `GET` | `/api/e-invoice/invoices` | List all invoices |
-| `GET` | `/api/e-invoice/sample` | Get sample invoice |
-| `GET` | `/api/e-invoice/validation-rules` | Get validation rules |
+| `POST` | `/api/e-invoice/cancel` | Cancel an invoice |
 
-## 🚀 Quick Start
+### Quick Testing
 
-### Generate Test E-Invoice
+Visit the [live documentation](https://e-invoice-api.vercel.app) to test endpoints directly from your browser with our interactive UI.
+
+## 🛠️ Usage Examples
+
+### Generate Invoice
 ```bash
 curl -X POST https://e-invoice-api.vercel.app/api/e-invoice/generate \
   -H "Content-Type: application/json" \
@@ -56,47 +95,52 @@ curl -X POST https://e-invoice-api.vercel.app/api/e-invoice/generate \
     "Version": "1.1",
     "TranDtls": {
       "TaxSch": "GST",
-      "SupTyp": "B2B"
+      "SupTyp": "B2B",
+      "RegRev": "N"
     },
     "DocDtls": {
-      "Typ": "INV", 
+      "Typ": "INV",
       "No": "TEST/001",
       "Dt": "20/05/2024"
     },
     "SellerDtls": {
       "Gstin": "29AABCT1332L000",
-      "LglNm": "Test Seller",
-      "Addr1": "Address",
-      "Loc": "City",
+      "LglNm": "Test Company",
+      "Addr1": "Test Address",
+      "Loc": "BANGALORE",
       "Pin": 560001,
       "Stcd": "29"
     },
     "BuyerDtls": {
-      "Gstin": "29AWGPV7107B1Z1", 
+      "Gstin": "29AWGPV7107B1Z1",
       "LglNm": "Test Buyer",
       "Pos": "29",
-      "Addr1": "Address",
-      "Loc": "City",
+      "Addr1": "Buyer Address",
+      "Loc": "BANGALORE", 
       "Pin": 560004,
       "Stcd": "29"
     },
     "ItemList": [{
       "SlNo": "1",
       "IsServc": "N",
-      "PrdDesc": "Product",
+      "PrdDesc": "Test Product",
       "HsnCd": "8471",
-      "Qty": 1,
+      "Qty": 10,
       "Unit": "NOS",
       "UnitPrice": 1000,
-      "TotAmt": 1000,
-      "AssAmt": 1000,
+      "TotAmt": 10000,
+      "AssAmt": 10000,
       "GstRt": 18,
-      "IgstAmt": 180,
-      "TotItemVal": 1180
+      "IgstAmt": 0,
+      "CgstAmt": 900,
+      "SgstAmt": 900,
+      "TotItemVal": 11800
     }],
     "ValDtls": {
-      "AssVal": 1000,
-      "IgstVal": 180,
-      "TotInvVal": 1180
+      "AssVal": 10000,
+      "CgstVal": 900,
+      "SgstVal": 900,
+      "IgstVal": 0,
+      "TotInvVal": 11800
     }
   }'
