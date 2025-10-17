@@ -11,8 +11,10 @@ window.testEndpoint = async function(endpoint) {
         return;
     }
     
+    // Show loading state
     testResult.style.display = 'block';
-    resultContent.textContent = 'Testing...';
+    resultContent.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"></div><div class="mt-2">Loading...</div></div>';
+    testResult.querySelector('.card').className = 'card bg-dark border-secondary';
     
     try {
         const response = await fetch(endpoint);
@@ -20,6 +22,8 @@ window.testEndpoint = async function(endpoint) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
+        
+        // Format the JSON response with syntax highlighting
         resultContent.textContent = JSON.stringify(data, null, 2);
         testResult.querySelector('.card').className = 'card bg-dark border-success';
         
@@ -27,10 +31,17 @@ window.testEndpoint = async function(endpoint) {
         if (endpoint === '/health') {
             loadStats();
         }
+        
+        // Scroll to the result section
+        testResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        
     } catch (error) {
         console.error('Error testing endpoint:', error);
         resultContent.textContent = 'Error: ' + error.message;
         testResult.querySelector('.card').className = 'card bg-dark border-danger';
+        
+        // Scroll to the error
+        testResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 };
 
@@ -80,6 +91,15 @@ window.copyResult = async function() {
 window.generateInvoice = async function() {
     const count = prompt('How many invoices to generate?', '1');
     if (count) {
+        const testResult = document.getElementById('testResult');
+        const resultContent = document.getElementById('resultContent');
+        
+        if (testResult && resultContent) {
+            testResult.style.display = 'block';
+            resultContent.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"></div><div class="mt-2">Generating invoices...</div></div>';
+            testResult.querySelector('.card').className = 'card bg-dark border-secondary';
+        }
+        
         try {
             const response = await fetch('/api/e-invoice/generate-dynamic', {
                 method: 'POST',
@@ -95,26 +115,25 @@ window.generateInvoice = async function() {
             
             const data = await response.json();
             
-            const testResult = document.getElementById('testResult');
-            const resultContent = document.getElementById('resultContent');
-            
             if (testResult && resultContent) {
-                testResult.style.display = 'block';
                 resultContent.textContent = JSON.stringify(data, null, 2);
                 testResult.querySelector('.card').className = 'card bg-dark border-success';
             }
             
-            // Refresh stats
+            // Refresh stats and invoices
             loadStats();
+            
+            // Scroll to result
+            testResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            
         } catch (error) {
             console.error('Error generating invoice:', error);
-            const testResult = document.getElementById('testResult');
-            const resultContent = document.getElementById('resultContent');
-            
             if (testResult && resultContent) {
-                testResult.style.display = 'block';
                 resultContent.textContent = 'Error: ' + error.message;
                 testResult.querySelector('.card').className = 'card bg-dark border-danger';
+                
+                // Scroll to error
+                testResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
         }
     }
@@ -194,7 +213,7 @@ async function loadSamples() {
                 const card = document.createElement('div');
                 card.className = 'col-md-6 col-lg-4';
                 card.innerHTML = `
-                    <div class="card sample-card bg-secondary border-0 h-100" onclick="testSample(${sample.id})">
+                    <div class="card sample-card bg-secondary border-0 h-100" onclick="testSample(${sample.id})" style="cursor: pointer;">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <h5 class="card-title mb-0">Sample #${sample.id}</h5>
@@ -216,14 +235,25 @@ async function loadSamples() {
     }
 }
 
-// Initialize the application when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('E-Invoice API UI loaded');
+// Auto-test health on page load
+window.addEventListener('load', function() {
+    console.log('E-Invoice API UI loaded successfully');
     loadStats();
     loadSamples();
+    
+    // Auto-test health endpoint after a short delay
+    setTimeout(() => {
+        const testResult = document.getElementById('testResult');
+        const resultContent = document.getElementById('resultContent');
+        
+        if (testResult && resultContent) {
+            testResult.style.display = 'block';
+            resultContent.innerHTML = '<div class="text-center text-muted"><i class="bi bi-info-circle me-2"></i>Click any test button to see API responses here</div>';
+        }
+    }, 1000);
 });
 
-// Export functions for global access (redundant but safe)
+// Make functions globally available
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         testEndpoint: window.testEndpoint,
