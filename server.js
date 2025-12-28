@@ -488,6 +488,7 @@ app.get('/api/e-invoice/stats', (req, res) => {
 });
 
 // Get samples with filtering
+// Get samples with filtering
 app.get('/api/e-invoice/samples', (req, res) => {
   try {
     const samples = dataGenerator.getTestSamples();
@@ -502,20 +503,114 @@ app.get('/api/e-invoice/samples', (req, res) => {
       buyerState: samples[id].BuyerDtls.Stcd,
       isInterstate: samples[id].SellerDtls.Stcd !== samples[id].BuyerDtls.Pos,
       reverseCharge: samples[id].TranDtls.RegRev === 'Y',
+      itemCount: samples[id].ItemList.length,
+      invoiceDate: samples[id].DocDtls.Dt,
       endpoint: `/api/e-invoice/sample/${id}`
     }));
     
     // Apply filtering to samples if requested
     if (Object.keys(req.query).length > 0) {
-      const filter = new AdvancedFilter(samplesList);
-      const filteredSamples = filter.applyFilters(req.query);
+      // Create a separate filter for samples
+      let filteredSamples = [...samplesList];
+      
+      // Apply each filter
+      const { 
+        type, 
+        totalValue, 
+        documentType, 
+        sellerState, 
+        buyerState, 
+        interstate,
+        reverseCharge,
+        minValue,
+        maxValue,
+        search
+      } = req.query;
+      
+      // Filter by type
+      if (type) {
+        if (type.includes(',')) {
+          const types = type.split(',').map(t => t.trim());
+          filteredSamples = filteredSamples.filter(sample => types.includes(sample.type));
+        } else {
+          filteredSamples = filteredSamples.filter(sample => sample.type === type);
+        }
+      }
+      
+      // Filter by totalValue (exact match)
+      if (totalValue) {
+        // Check if it's a special filter (lt:, gt:, eq:, ne:)
+        if (totalValue.startsWith('lt:')) {
+          const maxVal = parseFloat(totalValue.substring(3));
+          filteredSamples = filteredSamples.filter(sample => sample.totalValue < maxVal);
+        } else if (totalValue.startsWith('gt:')) {
+          const minVal = parseFloat(totalValue.substring(3));
+          filteredSamples = filteredSamples.filter(sample => sample.totalValue > minVal);
+        } else if (totalValue.startsWith('eq:')) {
+          const exactVal = parseFloat(totalValue.substring(3));
+          filteredSamples = filteredSamples.filter(sample => sample.totalValue === exactVal);
+        } else if (totalValue.startsWith('ne:')) {
+          const notVal = parseFloat(totalValue.substring(3));
+          filteredSamples = filteredSamples.filter(sample => sample.totalValue !== notVal);
+        } else {
+          // Exact match
+          const val = parseFloat(totalValue);
+          filteredSamples = filteredSamples.filter(sample => sample.totalValue === val);
+        }
+      }
+      
+      // Filter by documentType
+      if (documentType) {
+        filteredSamples = filteredSamples.filter(sample => sample.documentType === documentType);
+      }
+      
+      // Filter by sellerState
+      if (sellerState) {
+        filteredSamples = filteredSamples.filter(sample => sample.sellerState === sellerState);
+      }
+      
+      // Filter by buyerState
+      if (buyerState) {
+        filteredSamples = filteredSamples.filter(sample => sample.buyerState === buyerState);
+      }
+      
+      // Filter by interstate
+      if (interstate) {
+        const isInterstate = interstate === 'true';
+        filteredSamples = filteredSamples.filter(sample => sample.isInterstate === isInterstate);
+      }
+      
+      // Filter by reverseCharge
+      if (reverseCharge) {
+        const isReverse = reverseCharge === 'true';
+        filteredSamples = filteredSamples.filter(sample => sample.reverseCharge === isReverse);
+      }
+      
+      // Filter by value range
+      if (minValue || maxValue) {
+        const min = minValue ? parseFloat(minValue) : -Infinity;
+        const max = maxValue ? parseFloat(maxValue) : Infinity;
+        filteredSamples = filteredSamples.filter(sample => 
+          sample.totalValue >= min && sample.totalValue <= max
+        );
+      }
+      
+      // Filter by search
+      if (search) {
+        const term = search.toLowerCase();
+        filteredSamples = filteredSamples.filter(sample => 
+          sample.invoiceNo.toLowerCase().includes(term) ||
+          sample.description.toLowerCase().includes(term)
+        );
+      }
       
       res.json({
         success: true,
         data: filteredSamples,
         count: filteredSamples.length,
         total: samplesList.length,
-        filters: req.query
+        filters: req.query,
+        message: filteredSamples.length === 0 ? 'No samples found matching the criteria' : 'Samples filtered successfully'
       });
     } else {
       res.json({
@@ -526,7 +621,11 @@ app.get('/api/e-invoice/samples', (req, res) => {
     }
     
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Error filtering samples',
+      error: error.message
+    });
   }
 });
 
