@@ -1,4 +1,4 @@
-const express = require('express');
+\const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
@@ -36,225 +36,180 @@ Object.values(TEST_SAMPLES).forEach((sample, index) => {
   });
 });
 
-// ==================== ADVANCED FILTERING SYSTEM ====================
+// ==================== GENERIC FILTERING SYSTEM ====================
 
-class AdvancedFilter {
+class GenericFilter {
   constructor(data) {
     this.data = data;
   }
 
-  // Apply all filters
-  applyFilters(filters) {
-    let filteredData = [...this.data];
+  /**
+   * Apply generic filters to any data array
+   * @param {Array} data - The data to filter
+   * @param {Object} filters - Filter parameters
+   * @param {Object} fieldMapping - Map query params to actual fields
+   * @returns {Array} Filtered data
+   */
+  apply(data, filters, fieldMapping = {}) {
+    let filteredData = [...data];
     
-    // Single field equality filters
-    if (filters.status) filteredData = this.filterByStatus(filteredData, filters.status);
-    if (filters.supplyType) filteredData = this.filterBySupplyType(filteredData, filters.supplyType);
-    if (filters.sellerState) filteredData = this.filterBySellerState(filteredData, filters.sellerState);
-    if (filters.buyerState) filteredData = this.filterByBuyerState(filteredData, filters.buyerState);
-    if (filters.documentType) filteredData = this.filterByDocumentType(filteredData, filters.documentType);
-    
-    // Special filters
-    if (filters.interstate) filteredData = this.filterInterstate(filteredData, filters.interstate);
-    if (filters.reverseCharge) filteredData = this.filterReverseCharge(filteredData, filters.reverseCharge);
-    
-    // Date range filters
-    if (filters.dateFrom || filters.dateTo) {
-      filteredData = this.filterByDateRange(filteredData, filters.dateFrom, filters.dateTo);
-    }
-    
-    // Value range filters
-    if (filters.minValue || filters.maxValue) {
-      filteredData = this.filterByValueRange(filteredData, filters.minValue, filters.maxValue);
-    }
-    
-    // Special value filters
-    if (filters.totalValue) filteredData = this.filterByTotalValue(filteredData, filters.totalValue);
-    
-    // Text search
-    if (filters.search) filteredData = this.filterBySearch(filteredData, filters.search);
-    
-    // Multiple value filters (OR logic)
-    if (filters.supplyTypes) filteredData = this.filterByMultipleSupplyTypes(filteredData, filters.supplyTypes);
-    if (filters.statuses) filteredData = this.filterByMultipleStatuses(filteredData, filters.statuses);
-    
-    // Sorting
-    filteredData = this.sortData(filteredData, filters.sortBy, filters.sortOrder);
+    // Apply each filter dynamically
+    Object.keys(filters).forEach(filterKey => {
+      if (filterKey === 'page' || filterKey === 'limit' || filterKey === 'sortBy' || filterKey === 'sortOrder') {
+        return; // Skip pagination/sorting params
+      }
+      
+      const filterValue = filters[filterKey];
+      if (filterValue === undefined || filterValue === '') {
+        return;
+      }
+      
+      // Map query param to actual field name
+      const actualField = fieldMapping[filterKey] || filterKey;
+      
+      filteredData = this.applySingleFilter(filteredData, actualField, filterValue);
+    });
     
     return filteredData;
   }
 
-  // Individual filter methods
-  filterByStatus(data, status) {
-    return data.filter(item => item.status === status);
-  }
-
-  filterBySupplyType(data, supplyType) {
-    // Handle comma-separated values (OR logic)
-    if (supplyType.includes(',')) {
-      const types = supplyType.split(',').map(t => t.trim());
-      return data.filter(item => types.includes(item.invoiceData.TranDtls.SupTyp));
-    }
-    return data.filter(item => item.invoiceData.TranDtls.SupTyp === supplyType);
-  }
-
-  filterBySellerState(data, state) {
-    return data.filter(item => item.invoiceData.SellerDtls.Stcd === state);
-  }
-
-  filterByBuyerState(data, state) {
-    return data.filter(item => item.invoiceData.BuyerDtls.Stcd === state);
-  }
-
-  filterByDocumentType(data, docType) {
-    return data.filter(item => item.invoiceData.DocDtls.Typ === docType);
-  }
-
-  filterInterstate(data, isInterstate) {
-    const interstate = isInterstate === 'true';
+  /**
+   * Apply a single filter dynamically
+   */
+  applySingleFilter(data, field, value) {
     return data.filter(item => {
-      const sellerState = item.invoiceData.SellerDtls.Stcd;
-      const buyerState = item.invoiceData.BuyerDtls.Stcd;
-      const pos = item.invoiceData.BuyerDtls.Pos;
-      return interstate ? sellerState !== pos : sellerState === pos;
-    });
-  }
-
-  filterReverseCharge(data, reverseCharge) {
-    const isReverse = reverseCharge === 'true';
-    return data.filter(item => {
-      const regRev = item.invoiceData.TranDtls.RegRev;
-      return isReverse ? regRev === 'Y' : regRev === 'N';
-    });
-  }
-
-  filterByDateRange(data, dateFrom, dateTo) {
-    return data.filter(item => {
-      const generatedDate = new Date(item.generatedAt);
-      const fromDate = dateFrom ? new Date(dateFrom) : null;
-      const toDate = dateTo ? new Date(dateTo) : null;
+      // Get the value from the item (support nested paths)
+      const itemValue = this.getValueFromPath(item, field);
       
-      let pass = true;
-      if (fromDate) pass = pass && generatedDate >= fromDate;
-      if (toDate) pass = pass && generatedDate <= toDate;
-      return pass;
+      // Handle special filter patterns
+      if (typeof value === 'string') {
+        // Multiple values (OR logic) - comma separated
+        if (value.includes(',') && !value.startsWith('lt:') && !value.startsWith('gt:') && !value.startsWith('eq:') && !value.startsWith('ne:')) {
+          const values = value.split(',').map(v => v.trim());
+          return values.some(v => this.compareValues(itemValue, v));
+        }
+        
+        // Range filters (lt:, gt:, eq:, ne:)
+        if (value.startsWith('lt:')) {
+          const numValue = parseFloat(value.substring(3));
+          return typeof itemValue === 'number' && itemValue < numValue;
+        }
+        if (value.startsWith('gt:')) {
+          const numValue = parseFloat(value.substring(3));
+          return typeof itemValue === 'number' && itemValue > numValue;
+        }
+        if (value.startsWith('eq:')) {
+          const compareValue = value.substring(3);
+          return this.compareValues(itemValue, compareValue);
+        }
+        if (value.startsWith('ne:')) {
+          const compareValue = value.substring(3);
+          return !this.compareValues(itemValue, compareValue);
+        }
+        
+        // Boolean filters
+        if (value === 'true' || value === 'false') {
+          const boolValue = value === 'true';
+          return itemValue === boolValue;
+        }
+        
+        // Date range (from:to)
+        if (value.includes(':')) {
+          const [dateFrom, dateTo] = value.split(':');
+          if (dateFrom && dateTo) {
+            const itemDate = new Date(itemValue);
+            const fromDate = new Date(dateFrom);
+            const toDate = new Date(dateTo);
+            return itemDate >= fromDate && itemDate <= toDate;
+          }
+        }
+        
+        // Text search (case-insensitive partial match)
+        if (field === 'search') {
+          return this.searchInItem(item, value);
+        }
+      }
+      
+      // Default: exact match (case-insensitive for strings)
+      return this.compareValues(itemValue, value);
     });
   }
 
-  filterByValueRange(data, minValue, maxValue) {
-    const min = minValue ? parseFloat(minValue) : 0;
-    const max = maxValue ? parseFloat(maxValue) : Number.MAX_SAFE_INTEGER;
-    
-    return data.filter(item => {
-      const value = item.invoiceData.ValDtls.TotInvVal;
-      return value >= min && value <= max;
-    });
+  /**
+   * Get value from nested path (e.g., 'invoiceData.DocDtls.No')
+   */
+  getValueFromPath(item, path) {
+    return path.split('.').reduce((obj, key) => obj && obj[key], item);
   }
 
-  filterByTotalValue(data, filterString) {
-    // Handle special filters like: lt:1000, gt:5000, eq:10000
-    if (filterString.startsWith('lt:')) {
-      const maxValue = parseFloat(filterString.substring(3));
-      return data.filter(item => item.invoiceData.ValDtls.TotInvVal < maxValue);
-    } else if (filterString.startsWith('gt:')) {
-      const minValue = parseFloat(filterString.substring(3));
-      return data.filter(item => item.invoiceData.ValDtls.TotInvVal > minValue);
-    } else if (filterString.startsWith('eq:')) {
-      const exactValue = parseFloat(filterString.substring(3));
-      return data.filter(item => item.invoiceData.ValDtls.TotInvVal === exactValue);
-    } else if (filterString.startsWith('ne:')) {
-      const notValue = parseFloat(filterString.substring(3));
-      return data.filter(item => item.invoiceData.ValDtls.TotInvVal !== notValue);
+  /**
+   * Compare values with type conversion
+   */
+  compareValues(itemValue, filterValue) {
+    // Handle numbers
+    if (typeof itemValue === 'number' && !isNaN(filterValue)) {
+      return itemValue === parseFloat(filterValue);
     }
-    return data;
+    
+    // Handle booleans
+    if (typeof itemValue === 'boolean') {
+      return itemValue === (filterValue === 'true');
+    }
+    
+    // Handle strings (case-insensitive)
+    if (typeof itemValue === 'string') {
+      return itemValue.toLowerCase() === filterValue.toLowerCase();
+    }
+    
+    // Default strict equality
+    return itemValue == filterValue;
   }
 
-  filterBySearch(data, searchTerm) {
+  /**
+   * Search across multiple fields in an item
+   */
+  searchInItem(item, searchTerm) {
     const term = searchTerm.toLowerCase();
-    return data.filter(item => {
-      return (
-        item.irn.toLowerCase().includes(term) ||
-        item.invoiceData.DocDtls.No.toLowerCase().includes(term) ||
-        item.invoiceData.SellerDtls.LglNm.toLowerCase().includes(term) ||
-        item.invoiceData.BuyerDtls.LglNm.toLowerCase().includes(term) ||
-        item.invoiceData.SellerDtls.Gstin.toLowerCase().includes(term) ||
-        item.invoiceData.BuyerDtls.Gstin.toLowerCase().includes(term)
-      );
-    });
-  }
-
-  filterByMultipleSupplyTypes(data, supplyTypes) {
-    const types = supplyTypes.split(',').map(t => t.trim());
-    return data.filter(item => types.includes(item.invoiceData.TranDtls.SupTyp));
-  }
-
-  filterByMultipleStatuses(data, statuses) {
-    const statusArray = statuses.split(',').map(s => s.trim());
-    return data.filter(item => statusArray.includes(item.status));
-  }
-
-  sortData(data, sortBy = 'generatedAt', sortOrder = 'desc') {
-    const validSortFields = [
-      'id', 'irn', 'generatedAt', 'totalValue', 'invoiceNo', 
-      'status', 'supplyType', 'sellerState', 'buyerState'
+    
+    // Define searchable fields (can be customized)
+    const searchableFields = [
+      'irn',
+      'invoiceData.DocDtls.No',
+      'invoiceData.SellerDtls.LglNm',
+      'invoiceData.BuyerDtls.LglNm',
+      'invoiceData.SellerDtls.Gstin',
+      'invoiceData.BuyerDtls.Gstin',
+      'status'
     ];
     
-    // Use default if invalid sort field
-    if (!validSortFields.includes(sortBy)) {
-      sortBy = 'generatedAt';
-    }
-    
-    return data.sort((a, b) => {
-      let aValue, bValue;
-      
-      switch(sortBy) {
-        case 'totalValue':
-          aValue = a.invoiceData.ValDtls.TotInvVal;
-          bValue = b.invoiceData.ValDtls.TotInvVal;
-          break;
-        case 'invoiceNo':
-          aValue = a.invoiceData.DocDtls.No;
-          bValue = b.invoiceData.DocDtls.No;
-          break;
-        case 'supplyType':
-          aValue = a.invoiceData.TranDtls.SupTyp;
-          bValue = b.invoiceData.TranDtls.SupTyp;
-          break;
-        case 'sellerState':
-          aValue = a.invoiceData.SellerDtls.Stcd;
-          bValue = b.invoiceData.SellerDtls.Stcd;
-          break;
-        case 'buyerState':
-          aValue = a.invoiceData.BuyerDtls.Stcd;
-          bValue = b.invoiceData.BuyerDtls.Stcd;
-          break;
-        case 'generatedAt':
-          aValue = new Date(a.generatedAt);
-          bValue = new Date(b.generatedAt);
-          break;
-        default:
-          aValue = a[sortBy];
-          bValue = b[sortBy];
-      }
-      
-      // Handle string comparison
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        aValue = aValue.toLowerCase();
-        bValue = bValue.toLowerCase();
-      }
-      
-      if (sortOrder === 'desc') {
-        return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
-      } else {
-        return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-      }
+    return searchableFields.some(field => {
+      const value = this.getValueFromPath(item, field);
+      return value && value.toString().toLowerCase().includes(term);
     });
   }
 
-  // Pagination
-  paginateData(data, page = 1, limit = 10) {
-    const pageNum = parseInt(page);
-    const limitNum = parseInt(limit);
+  /**
+   * Sort data dynamically
+   */
+  sort(data, sortBy = 'generatedAt', sortOrder = 'desc') {
+    const order = sortOrder === 'desc' ? -1 : 1;
+    
+    return [...data].sort((a, b) => {
+      const aValue = this.getValueFromPath(a, sortBy);
+      const bValue = this.getValueFromPath(b, sortBy);
+      
+      if (aValue < bValue) return -1 * order;
+      if (aValue > bValue) return 1 * order;
+      return 0;
+    });
+  }
+
+  /**
+   * Apply pagination
+   */
+  paginate(data, page = 1, limit = 10) {
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
     const startIndex = (pageNum - 1) * limitNum;
     const endIndex = pageNum * limitNum;
     
@@ -270,7 +225,60 @@ class AdvancedFilter {
   }
 }
 
-// ==================== API ENDPOINTS WITH ADVANCED FILTERING ====================
+// Create filter instance
+const filter = new GenericFilter();
+
+// ==================== HELPER FUNCTIONS ====================
+
+/**
+ * Format invoice for response
+ */
+function formatInvoice(invoice) {
+  return {
+    id: invoice.id,
+    irn: invoice.irn,
+    invoiceNo: invoice.invoiceData.DocDtls.No,
+    invoiceDate: invoice.invoiceData.DocDtls.Dt,
+    sellerGstin: invoice.invoiceData.SellerDtls.Gstin,
+    sellerName: invoice.invoiceData.SellerDtls.LglNm,
+    buyerGstin: invoice.invoiceData.BuyerDtls.Gstin,
+    buyerName: invoice.invoiceData.BuyerDtls.LglNm,
+    supplyType: invoice.invoiceData.TranDtls.SupTyp,
+    documentType: invoice.invoiceData.DocDtls.Typ,
+    totalValue: invoice.invoiceData.ValDtls.TotInvVal,
+    status: invoice.status,
+    generatedAt: invoice.generatedAt,
+    sellerState: invoice.invoiceData.SellerDtls.Stcd,
+    buyerState: invoice.invoiceData.BuyerDtls.Stcd,
+    pos: invoice.invoiceData.BuyerDtls.Pos,
+    isInterstate: invoice.invoiceData.SellerDtls.Stcd !== invoice.invoiceData.BuyerDtls.Pos,
+    reverseCharge: invoice.invoiceData.TranDtls.RegRev === 'Y',
+    itemCount: invoice.invoiceData.ItemList ? invoice.invoiceData.ItemList.length : 0
+  };
+}
+
+/**
+ * Format sample for response
+ */
+function formatSample(id, sample) {
+  return {
+    id: parseInt(id),
+    type: sample.TranDtls.SupTyp,
+    description: dataGenerator.getSampleDescription(id),
+    invoiceNo: sample.DocDtls.No,
+    totalValue: sample.ValDtls.TotInvVal,
+    documentType: sample.DocDtls.Typ,
+    sellerState: sample.SellerDtls.Stcd,
+    buyerState: sample.BuyerDtls.Stcd,
+    isInterstate: sample.SellerDtls.Stcd !== sample.BuyerDtls.Pos,
+    reverseCharge: sample.TranDtls.RegRev === 'Y',
+    itemCount: sample.ItemList ? sample.ItemList.length : 0,
+    invoiceDate: sample.DocDtls.Dt,
+    endpoint: `/api/e-invoice/sample/${id}`
+  };
+}
+
+// ==================== API ENDPOINTS WITH GENERIC FILTERING ====================
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -284,9 +292,10 @@ app.get('/health', (req, res) => {
     message: 'E-Invoice API is running smoothly',
     timestamp: new Date().toISOString(),
     totalInvoices: invoices.length,
-    version: '2.1.0',
+    version: '2.2.0',
     features: {
-      advancedFiltering: true,
+      genericFiltering: true,
+      dynamicFieldSupport: true,
       pagination: true,
       sorting: true,
       search: true
@@ -294,85 +303,32 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Get all invoices with advanced filtering
+// Get all invoices with generic filtering
 app.get('/api/e-invoice/invoices', (req, res) => {
   try {
-    // Parse query parameters with defaults
-    const {
-      page = 1,
-      limit = 10,
-      sortBy = 'generatedAt',
-      sortOrder = 'desc',
-      status,
-      supplyType,
-      supplyTypes,
-      sellerState,
-      buyerState,
-      documentType,
-      interstate,
-      reverseCharge,
-      dateFrom,
-      dateTo,
-      minValue,
-      maxValue,
-      totalValue,
-      search,
-      statuses
-    } = req.query;
+    // Parse query parameters
+    const { page = 1, limit = 10, sortBy = 'generatedAt', sortOrder = 'desc', ...filters } = req.query;
     
     // Validate parameters
     const validPage = Math.max(1, parseInt(page));
-    const validLimit = Math.min(100, Math.max(1, parseInt(limit))); // Max 100 per page
+    const validLimit = Math.min(100, Math.max(1, parseInt(limit)));
     const validSortOrder = ['asc', 'desc'].includes(sortOrder) ? sortOrder : 'desc';
     
-    // Apply advanced filtering
-    const filter = new AdvancedFilter(invoices);
-    const filteredData = filter.applyFilters({
-      status,
-      supplyType,
-      supplyTypes,
-      sellerState,
-      buyerState,
-      documentType,
-      interstate,
-      reverseCharge,
-      dateFrom,
-      dateTo,
-      minValue,
-      maxValue,
-      totalValue,
-      search,
-      statuses,
-      sortBy,
-      sortOrder: validSortOrder
-    });
+    // Apply generic filtering
+    let filteredData = filter.apply(invoices, filters);
+    
+    // Apply sorting
+    filteredData = filter.sort(filteredData, sortBy, validSortOrder);
     
     // Apply pagination
-    const paginated = filter.paginateData(filteredData, validPage, validLimit);
+    const paginated = filter.paginate(filteredData, validPage, validLimit);
     
     // Format response
+    const responseData = paginated.data.map(formatInvoice);
+    
     const response = {
       success: true,
-      data: paginated.data.map(inv => ({
-        id: inv.id,
-        irn: inv.irn,
-        invoiceNo: inv.invoiceData.DocDtls.No,
-        invoiceDate: inv.invoiceData.DocDtls.Dt,
-        sellerGstin: inv.invoiceData.SellerDtls.Gstin,
-        sellerName: inv.invoiceData.SellerDtls.LglNm,
-        buyerGstin: inv.invoiceData.BuyerDtls.Gstin,
-        buyerName: inv.invoiceData.BuyerDtls.LglNm,
-        supplyType: inv.invoiceData.TranDtls.SupTyp,
-        documentType: inv.invoiceData.DocDtls.Typ,
-        totalValue: inv.invoiceData.ValDtls.TotInvVal,
-        status: inv.status,
-        generatedAt: inv.generatedAt,
-        sellerState: inv.invoiceData.SellerDtls.Stcd,
-        buyerState: inv.invoiceData.BuyerDtls.Stcd,
-        pos: inv.invoiceData.BuyerDtls.Pos,
-        isInterstate: inv.invoiceData.SellerDtls.Stcd !== inv.invoiceData.BuyerDtls.Pos,
-        reverseCharge: inv.invoiceData.TranDtls.RegRev === 'Y'
-      })),
+      data: responseData,
       pagination: {
         page: paginated.page,
         limit: paginated.limit,
@@ -381,22 +337,18 @@ app.get('/api/e-invoice/invoices', (req, res) => {
         hasNext: paginated.hasNext,
         hasPrev: paginated.hasPrev
       },
-      filters: {
-        applied: {
-          status, supplyType, sellerState, buyerState, documentType,
-          interstate, reverseCharge, dateFrom, dateTo, minValue, maxValue,
-          totalValue, search, statuses, supplyTypes
-        },
-        available: {
-          status: ['Generated', 'Cancelled'],
-          supplyType: ['B2B', 'EXPWP', 'EXPWOP', 'SEZWP', 'SEZWOP', 'DEXP'],
-          documentType: ['INV', 'CRN', 'DBN']
-        }
-      },
+      filters: filters,
       sort: {
         by: sortBy,
         order: validSortOrder
-      }
+      },
+      availableFields: Object.keys(responseData[0] || {}).concat([
+        'invoiceData.TranDtls.SupTyp',
+        'invoiceData.DocDtls.Typ',
+        'invoiceData.SellerDtls.Stcd',
+        'invoiceData.BuyerDtls.Stcd',
+        'invoiceData.ValDtls.TotInvVal'
+      ])
     };
     
     // Set custom headers
@@ -422,340 +374,52 @@ app.get('/api/e-invoice/invoices', (req, res) => {
   }
 });
 
-// Get filtered stats
-app.get('/api/e-invoice/stats', (req, res) => {
-  try {
-    // Apply same filters as invoices endpoint
-    const filter = new AdvancedFilter(invoices);
-    const filteredData = filter.applyFilters(req.query);
-    
-    const stats = {
-      totalInvoices: filteredData.length,
-      generated: filteredData.filter(inv => inv.status === 'Generated').length,
-      cancelled: filteredData.filter(inv => inv.status === 'Cancelled').length,
-      bySupplyType: {},
-      byState: {},
-      byDocumentType: {},
-      byStatus: {},
-      totalValue: filteredData.reduce((sum, inv) => sum + inv.invoiceData.ValDtls.TotInvVal, 0),
-      averageValue: filteredData.length > 0 ? 
-        filteredData.reduce((sum, inv) => sum + inv.invoiceData.ValDtls.TotInvVal, 0) / filteredData.length : 0,
-      interstateCount: filteredData.filter(inv => 
-        inv.invoiceData.SellerDtls.Stcd !== inv.invoiceData.BuyerDtls.Pos
-      ).length,
-      reverseChargeCount: filteredData.filter(inv => 
-        inv.invoiceData.TranDtls.RegRev === 'Y'
-      ).length
-    };
-    
-    filteredData.forEach(inv => {
-      const supplyType = inv.invoiceData.TranDtls.SupTyp;
-      const state = inv.invoiceData.SellerDtls.Stcd;
-      const docType = inv.invoiceData.DocDtls.Typ;
-      const status = inv.status;
-      
-      stats.bySupplyType[supplyType] = (stats.bySupplyType[supplyType] || 0) + 1;
-      stats.byState[state] = (stats.byState[state] || 0) + 1;
-      stats.byDocumentType[docType] = (stats.byDocumentType[docType] || 0) + 1;
-      stats.byStatus[status] = (stats.byStatus[status] || 0) + 1;
-    });
-    
-    // Add date range stats if filters applied
-    if (req.query.dateFrom || req.query.dateTo) {
-      const dates = filteredData.map(inv => new Date(inv.generatedAt).toISOString().split('T')[0]);
-      const uniqueDates = [...new Set(dates)].sort();
-      stats.dateRange = {
-        from: uniqueDates[0],
-        to: uniqueDates[uniqueDates.length - 1],
-        days: uniqueDates.length
-      };
-    }
-    
-    res.json({
-      success: true,
-      data: stats,
-      filters: req.query,
-      sampleCount: filteredData.length
-    });
-    
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error calculating statistics',
-      error: error.message
-    });
-  }
-});
-
-// Get samples with filtering
-// Get samples with filtering
+// Get samples with generic filtering
 app.get('/api/e-invoice/samples', (req, res) => {
   try {
     const samples = dataGenerator.getTestSamples();
-    const samplesList = Object.keys(samples).map(id => ({
-      id: parseInt(id),
-      type: samples[id].TranDtls.SupTyp,
-      description: dataGenerator.getSampleDescription(id),
-      invoiceNo: samples[id].DocDtls.No,
-      totalValue: samples[id].ValDtls.TotInvVal,
-      documentType: samples[id].DocDtls.Typ,
-      sellerState: samples[id].SellerDtls.Stcd,
-      buyerState: samples[id].BuyerDtls.Stcd,
-      isInterstate: samples[id].SellerDtls.Stcd !== samples[id].BuyerDtls.Pos,
-      reverseCharge: samples[id].TranDtls.RegRev === 'Y',
-      itemCount: samples[id].ItemList.length,
-      invoiceDate: samples[id].DocDtls.Dt,
-      endpoint: `/api/e-invoice/sample/${id}`
-    }));
     
-    // Apply filtering to samples if requested
-    if (Object.keys(req.query).length > 0) {
-      // Create a separate filter for samples
-      let filteredSamples = [...samplesList];
-      
-      // Apply each filter
-      const { 
-        type, 
-        totalValue, 
-        documentType, 
-        sellerState, 
-        buyerState, 
-        interstate,
-        reverseCharge,
-        minValue,
-        maxValue,
-        search
-      } = req.query;
-      
-      // Filter by type
-      if (type) {
-        if (type.includes(',')) {
-          const types = type.split(',').map(t => t.trim());
-          filteredSamples = filteredSamples.filter(sample => types.includes(sample.type));
-        } else {
-          filteredSamples = filteredSamples.filter(sample => sample.type === type);
-        }
-      }
-      
-      // Filter by totalValue (exact match)
-      if (totalValue) {
-        // Check if it's a special filter (lt:, gt:, eq:, ne:)
-        if (totalValue.startsWith('lt:')) {
-          const maxVal = parseFloat(totalValue.substring(3));
-          filteredSamples = filteredSamples.filter(sample => sample.totalValue < maxVal);
-        } else if (totalValue.startsWith('gt:')) {
-          const minVal = parseFloat(totalValue.substring(3));
-          filteredSamples = filteredSamples.filter(sample => sample.totalValue > minVal);
-        } else if (totalValue.startsWith('eq:')) {
-          const exactVal = parseFloat(totalValue.substring(3));
-          filteredSamples = filteredSamples.filter(sample => sample.totalValue === exactVal);
-        } else if (totalValue.startsWith('ne:')) {
-          const notVal = parseFloat(totalValue.substring(3));
-          filteredSamples = filteredSamples.filter(sample => sample.totalValue !== notVal);
-        } else {
-          // Exact match
-          const val = parseFloat(totalValue);
-          filteredSamples = filteredSamples.filter(sample => sample.totalValue === val);
-        }
-      }
-      
-      // Filter by documentType
-      if (documentType) {
-        filteredSamples = filteredSamples.filter(sample => sample.documentType === documentType);
-      }
-      
-      // Filter by sellerState
-      if (sellerState) {
-        filteredSamples = filteredSamples.filter(sample => sample.sellerState === sellerState);
-      }
-      
-      // Filter by buyerState
-      if (buyerState) {
-        filteredSamples = filteredSamples.filter(sample => sample.buyerState === buyerState);
-      }
-      
-      // Filter by interstate
-      if (interstate) {
-        const isInterstate = interstate === 'true';
-        filteredSamples = filteredSamples.filter(sample => sample.isInterstate === isInterstate);
-      }
-      
-      // Filter by reverseCharge
-      if (reverseCharge) {
-        const isReverse = reverseCharge === 'true';
-        filteredSamples = filteredSamples.filter(sample => sample.reverseCharge === isReverse);
-      }
-      
-      // Filter by value range
-      if (minValue || maxValue) {
-        const min = minValue ? parseFloat(minValue) : -Infinity;
-        const max = maxValue ? parseFloat(maxValue) : Infinity;
-        filteredSamples = filteredSamples.filter(sample => 
-          sample.totalValue >= min && sample.totalValue <= max
-        );
-      }
-      
-      // Filter by search
-      if (search) {
-        const term = search.toLowerCase();
-        filteredSamples = filteredSamples.filter(sample => 
-          sample.invoiceNo.toLowerCase().includes(term) ||
-          sample.description.toLowerCase().includes(term)
-        );
-      }
-      
-      res.json({
-        success: true,
-        data: filteredSamples,
-        count: filteredSamples.length,
-        total: samplesList.length,
-        filters: req.query,
-        message: filteredSamples.length === 0 ? 'No samples found matching the criteria' : 'Samples filtered successfully'
-      });
-    } else {
-      res.json({
-        success: true,
-        data: samplesList,
-        count: samplesList.length
-      });
+    // Convert samples to array format
+    let samplesArray = Object.entries(samples).map(([id, sample]) => 
+      formatSample(id, sample)
+    );
+    
+    // Parse query parameters
+    const { page = 1, limit = 10, sortBy = 'id', sortOrder = 'asc', ...filters } = req.query;
+    
+    // Apply generic filtering if filters present
+    if (Object.keys(filters).length > 0) {
+      samplesArray = filter.apply(samplesArray, filters);
     }
     
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error filtering samples',
-      error: error.message
-    });
-  }
-});
-
-// Get filtered sample by criteria
-app.get('/api/e-invoice/sample-by', (req, res) => {
-  try {
-    const { 
-      type, 
-      minValue, 
-      maxValue, 
-      interstate, 
-      reverseCharge,
-      totalValue,
-      documentType,
-      sellerState,
-      buyerState
-    } = req.query;
+    // Apply sorting
+    samplesArray = filter.sort(samplesArray, sortBy, sortOrder);
     
-    const samples = dataGenerator.getTestSamples();
+    // Apply pagination
+    const { page: pageNum = 1, limit: limitNum = 100 } = req.query;
+    const paginated = filter.paginate(samplesArray, pageNum, limitNum);
     
-    let filteredSamples = Object.entries(samples).map(([id, sample]) => ({
-      id: parseInt(id),
-      type: sample.TranDtls.SupTyp,
-      description: dataGenerator.getSampleDescription(id),
-      invoiceNo: sample.DocDtls.No,
-      totalValue: sample.ValDtls.TotInvVal,
-      documentType: sample.DocDtls.Typ,
-      sellerState: sample.SellerDtls.Stcd,
-      buyerState: sample.BuyerDtls.Stcd,
-      isInterstate: sample.SellerDtls.Stcd !== sample.BuyerDtls.Pos,
-      reverseCharge: sample.TranDtls.RegRev === 'Y',
-      itemCount: sample.ItemList.length,
-      data: sample
-    }));
-    
-    // Apply filters
-    if (type) {
-      if (type.includes(',')) {
-        const types = type.split(',').map(t => t.trim());
-        filteredSamples = filteredSamples.filter(s => types.includes(s.type));
-      } else {
-        filteredSamples = filteredSamples.filter(s => s.type === type);
-      }
-    }
-    
-    if (totalValue) {
-      // Handle special filters
-      if (totalValue.startsWith('lt:')) {
-        const maxVal = parseFloat(totalValue.substring(3));
-        filteredSamples = filteredSamples.filter(s => s.totalValue < maxVal);
-      } else if (totalValue.startsWith('gt:')) {
-        const minVal = parseFloat(totalValue.substring(3));
-        filteredSamples = filteredSamples.filter(s => s.totalValue > minVal);
-      } else if (totalValue.startsWith('eq:')) {
-        const exactVal = parseFloat(totalValue.substring(3));
-        filteredSamples = filteredSamples.filter(s => s.totalValue === exactVal);
-      } else if (totalValue.startsWith('ne:')) {
-        const notVal = parseFloat(totalValue.substring(3));
-        filteredSamples = filteredSamples.filter(s => s.totalValue !== notVal);
-      } else {
-        const val = parseFloat(totalValue);
-        filteredSamples = filteredSamples.filter(s => s.totalValue === val);
-      }
-    }
-    
-    if (minValue) {
-      const min = parseFloat(minValue);
-      filteredSamples = filteredSamples.filter(s => s.totalValue >= min);
-    }
-    
-    if (maxValue) {
-      const max = parseFloat(maxValue);
-      filteredSamples = filteredSamples.filter(s => s.totalValue <= max);
-    }
-    
-    if (interstate) {
-      const isInterstate = interstate === 'true';
-      filteredSamples = filteredSamples.filter(s => s.isInterstate === isInterstate);
-    }
-    
-    if (reverseCharge) {
-      const isReverse = reverseCharge === 'true';
-      filteredSamples = filteredSamples.filter(s => s.reverseCharge === isReverse);
-    }
-    
-    if (documentType) {
-      filteredSamples = filteredSamples.filter(s => s.documentType === documentType);
-    }
-    
-    if (sellerState) {
-      filteredSamples = filteredSamples.filter(s => s.sellerState === sellerState);
-    }
-    
-    if (buyerState) {
-      filteredSamples = filteredSamples.filter(s => s.buyerState === buyerState);
-    }
-    
-    if (filteredSamples.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'No samples found matching the criteria',
-        filters: req.query,
-        availableSamples: Object.keys(samples).map(id => ({
-          id: parseInt(id),
-          type: samples[id].TranDtls.SupTyp,
-          totalValue: samples[id].ValDtls.TotInvVal
-        }))
-      });
-    }
-    
-    // Return all matching samples, not just random
     res.json({
       success: true,
-      data: filteredSamples.map(s => s.data),
-      metadata: {
-        matchedCount: filteredSamples.length,
-        filters: req.query,
-        samples: filteredSamples.map(s => ({
-          id: s.id,
-          type: s.type,
-          totalValue: s.totalValue,
-          description: s.description
-        }))
+      data: paginated.data,
+      count: paginated.data.length,
+      total: samplesArray.length,
+      filters: filters,
+      pagination: {
+        page: paginated.page,
+        limit: paginated.limit,
+        total: paginated.total,
+        pages: paginated.pages
+      },
+      sort: {
+        by: sortBy,
+        order: sortOrder
       }
     });
     
   } catch (error) {
     res.status(500).json({ 
       success: false,
-      message: 'Error filtering samples',
       error: error.message 
     });
   }
@@ -774,172 +438,188 @@ app.get('/api/e-invoice/sample/:id', (req, res) => {
         sampleId: parseInt(id),
         description: dataGenerator.getSampleDescription(id),
         type: samples[id].TranDtls.SupTyp,
-        metadata: {
-          totalValue: samples[id].ValDtls.TotInvVal,
-          isInterstate: samples[id].SellerDtls.Stcd !== samples[id].BuyerDtls.Pos,
-          reverseCharge: samples[id].TranDtls.RegRev === 'Y',
-          itemCount: samples[id].ItemList.length
-        }
+        metadata: formatSample(id, samples[id])
       });
     } else {
       res.status(404).json({
         success: false,
         message: `Sample ${id} not found. Available samples: 1-${Object.keys(samples).length}`,
-        availableSamples: Object.keys(samples).map(id => ({
-          id: parseInt(id),
-          type: samples[id].TranDtls.SupTyp,
-          description: dataGenerator.getSampleDescription(id),
-          totalValue: samples[id].ValDtls.TotInvVal
-        }))
+        availableSamples: Object.keys(samples).map(id => 
+          formatSample(id, samples[id])
+        )
       });
     }
   } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Get filtered sample by criteria
-app.get('/api/e-invoice/sample-by', (req, res) => {
-  try {
-    const { type, minValue, maxValue, interstate, reverseCharge } = req.query;
-    const samples = dataGenerator.getTestSamples();
-    
-    let filteredSamples = Object.entries(samples).map(([id, sample]) => ({
-      id: parseInt(id),
-      ...sample
-    }));
-    
-    // Apply filters
-    if (type) {
-      filteredSamples = filteredSamples.filter(s => s.TranDtls.SupTyp === type);
-    }
-    
-    if (minValue) {
-      const min = parseFloat(minValue);
-      filteredSamples = filteredSamples.filter(s => s.ValDtls.TotInvVal >= min);
-    }
-    
-    if (maxValue) {
-      const max = parseFloat(maxValue);
-      filteredSamples = filteredSamples.filter(s => s.ValDtls.TotInvVal <= max);
-    }
-    
-    if (interstate) {
-      const isInterstate = interstate === 'true';
-      filteredSamples = filteredSamples.filter(s => 
-        isInterstate ? s.SellerDtls.Stcd !== s.BuyerDtls.Pos : s.SellerDtls.Stcd === s.BuyerDtls.Pos
-      );
-    }
-    
-    if (reverseCharge) {
-      const isReverse = reverseCharge === 'true';
-      filteredSamples = filteredSamples.filter(s => 
-        isReverse ? s.TranDtls.RegRev === 'Y' : s.TranDtls.RegRev === 'N'
-      );
-    }
-    
-    if (filteredSamples.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'No samples found matching the criteria',
-        filters: req.query
-      });
-    }
-    
-    // Return random sample from filtered results
-    const randomSample = filteredSamples[Math.floor(Math.random() * filteredSamples.length)];
-    
-    res.json({
-      success: true,
-      data: randomSample,
-      matchedCount: filteredSamples.length,
-      filters: req.query
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
     });
-    
-  } catch (error) {
-    res.status(500).json({ error: error.message });
   }
 });
 
-// Get random sample
-app.get('/api/e-invoice/sample', (req, res) => {
+// Get available fields for filtering
+app.get('/api/e-invoice/fields', (req, res) => {
   try {
+    // Get field info from invoices
+    const invoiceFields = invoices.length > 0 ? 
+      Object.keys(formatInvoice(invoices[0])) : [];
+    
+    // Get field info from samples
     const samples = dataGenerator.getTestSamples();
-    const randomId = Math.floor(Math.random() * Object.keys(samples).length) + 1;
+    const sampleFields = Object.keys(samples).length > 0 ?
+      Object.keys(formatSample('1', samples[1])) : [];
     
-    res.json({
-      success: true,
-      data: samples[randomId],
-      sampleId: randomId,
-      description: dataGenerator.getSampleDescription(randomId.toString()),
-      note: "This is a random sample. Use /api/e-invoice/sample/:id for specific samples",
-      filters: req.query
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Get available filter options
-app.get('/api/e-invoice/filter-options', (req, res) => {
-  try {
-    const options = {
-      status: ['Generated', 'Cancelled'],
-      supplyType: ['B2B', 'EXPWP', 'EXPWOP', 'SEZWP', 'SEZWOP', 'DEXP'],
-      documentType: ['INV', 'CRN', 'DBN'],
-      sellerState: ['29', '07', '27', '33', '36', '06'],
-      buyerState: ['29', '07', '27', '33', '36', '06', '96'],
-      sortBy: ['id', 'irn', 'generatedAt', 'totalValue', 'invoiceNo', 'status', 'supplyType', 'sellerState', 'buyerState'],
-      sortOrder: ['asc', 'desc'],
-      valueOperators: ['lt:', 'gt:', 'eq:', 'ne:'],
-      dateFormats: ['YYYY-MM-DD', 'ISO string'],
-      examples: {
-        singleValue: '?supplyType=B2B',
-        multipleValues: '?supplyTypes=B2B,EXPWP,SEZWP',
-        dateRange: '?dateFrom=2024-01-01&dateTo=2024-12-31',
-        valueRange: '?minValue=1000&maxValue=10000',
-        specialValue: '?totalValue=lt:1000',
-        interstate: '?interstate=true',
-        reverseCharge: '?reverseCharge=false',
-        pagination: '?page=2&limit=20',
-        sorting: '?sortBy=totalValue&sortOrder=desc',
-        search: '?search=INV/2024'
-      }
+    // Get nested fields
+    const nestedFields = [
+      'invoiceData.TranDtls.SupTyp',
+      'invoiceData.TranDtls.RegRev',
+      'invoiceData.DocDtls.No',
+      'invoiceData.DocDtls.Typ',
+      'invoiceData.DocDtls.Dt',
+      'invoiceData.SellerDtls.Gstin',
+      'invoiceData.SellerDtls.LglNm',
+      'invoiceData.SellerDtls.Stcd',
+      'invoiceData.BuyerDtls.Gstin',
+      'invoiceData.BuyerDtls.LglNm',
+      'invoiceData.BuyerDtls.Stcd',
+      'invoiceData.BuyerDtls.Pos',
+      'invoiceData.ValDtls.TotInvVal',
+      'invoiceData.ValDtls.AssVal',
+      'invoiceData.ValDtls.IgstVal',
+      'invoiceData.ValDtls.CgstVal',
+      'invoiceData.ValDtls.SgstVal'
+    ];
+    
+    const fieldTypes = {
+      string: ['irn', 'invoiceNo', 'sellerGstin', 'buyerGstin', 'sellerName', 'buyerName', 'status', 'supplyType', 'documentType', 'sellerState', 'buyerState'],
+      number: ['id', 'totalValue', 'itemCount'],
+      boolean: ['isInterstate', 'reverseCharge'],
+      date: ['generatedAt', 'invoiceDate'],
+      nested: nestedFields
     };
     
-    // Add available states from actual data
-    const uniqueSellerStates = [...new Set(invoices.map(inv => inv.invoiceData.SellerDtls.Stcd))];
-    const uniqueBuyerStates = [...new Set(invoices.map(inv => inv.invoiceData.BuyerDtls.Stcd))];
-    
-    options.sellerState = uniqueSellerStates;
-    options.buyerState = uniqueBuyerStates;
-    
     res.json({
       success: true,
-      data: options,
-      count: Object.keys(options).length
+      data: {
+        invoiceFields,
+        sampleFields,
+        nestedFields,
+        fieldTypes,
+        filterOperators: {
+          exact: 'field=value',
+          multiple: 'field=value1,value2,value3',
+          lessThan: 'field=lt:value',
+          greaterThan: 'field=gt:value',
+          equalTo: 'field=eq:value',
+          notEqualTo: 'field=ne:value',
+          dateRange: 'dateField=2024-01-01:2024-12-31',
+          boolean: 'field=true or field=false',
+          search: 'search=term'
+        },
+        examples: {
+          invoices: {
+            exact: '/invoices?status=Generated',
+            multiple: '/invoices?supplyType=B2B,EXPWP',
+            range: '/invoices?totalValue=lt:100000',
+            date: '/invoices?generatedAt=2024-01-01:2024-12-31',
+            nested: '/invoices?invoiceData.TranDtls.SupTyp=B2B',
+            combined: '/invoices?status=Generated&supplyType=B2B&totalValue=gt:50000'
+          },
+          samples: {
+            exact: '/samples?totalValue=442500',
+            multiple: '/samples?type=B2B,EXPWP',
+            boolean: '/samples?isInterstate=true',
+            range: '/samples?totalValue=lt:100000',
+            search: '/samples?search=INV/2024'
+          }
+        }
+      }
     });
     
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
   }
 });
 
-// Keep all other endpoints (generate, generate-dynamic, validate, cancel) as they are
-// ... (previous code for other endpoints remains the same)
+// Generic search across all endpoints
+app.get('/api/e-invoice/search', (req, res) => {
+  try {
+    const { q: query, type = 'all', ...filters } = req.query;
+    
+    if (!query) {
+      return res.status(400).json({
+        success: false,
+        message: 'Search query (q) is required'
+      });
+    }
+    
+    let results = [];
+    
+    // Search in invoices
+    if (type === 'all' || type === 'invoices') {
+      const invoiceResults = filter.apply(invoices, { search: query, ...filters });
+      results.push(...invoiceResults.map(inv => ({
+        type: 'invoice',
+        data: formatInvoice(inv),
+        score: 1.0
+      })));
+    }
+    
+    // Search in samples
+    if (type === 'all' || type === 'samples') {
+      const samples = dataGenerator.getTestSamples();
+      const sampleArray = Object.entries(samples).map(([id, sample]) => 
+        formatSample(id, sample)
+      );
+      
+      const sampleResults = filter.apply(sampleArray, { search: query, ...filters });
+      results.push(...sampleResults.map(sample => ({
+        type: 'sample',
+        data: sample,
+        score: 1.0
+      })));
+    }
+    
+    // Sort by relevance (simple implementation)
+    results.sort((a, b) => b.score - a.score);
+    
+    res.json({
+      success: true,
+      query,
+      type,
+      count: results.length,
+      results,
+      filters
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Keep other endpoints (they remain the same)
+// ... (generate, generate-dynamic, validate, cancel, etc.)
 
 // Error handling
 app.use((error, req, res, next) => {
   console.error('Error:', error);
   res.status(500).json({ 
+    success: false,
     error: 'Server Error',
     message: 'Something went wrong'
   });
 });
 
-// 404 handler for API endpoints
+// 404 handler
 app.use('/api/*', (req, res) => {
   res.status(404).json({
+    success: false,
     error: 'Endpoint not found',
     message: `The API endpoint ${req.method} ${req.originalUrl} does not exist`,
     availableEndpoints: [
@@ -947,8 +627,8 @@ app.use('/api/*', (req, res) => {
       'GET    /api/e-invoice/invoices',
       'GET    /api/e-invoice/samples',
       'GET    /api/e-invoice/sample/:id',
-      'GET    /api/e-invoice/sample-by',
-      'GET    /api/e-invoice/filter-options',
+      'GET    /api/e-invoice/fields',
+      'GET    /api/e-invoice/search',
       'GET    /api/e-invoice/stats',
       'POST   /api/e-invoice/generate',
       'POST   /api/e-invoice/generate-dynamic',
@@ -967,6 +647,6 @@ if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📖 Documentation: http://localhost:${PORT}`);
-    console.log(`🔧 Advanced filtering enabled`);
+    console.log(`🔧 Generic filtering enabled - works for ANY field!`);
   });
 }
