@@ -1,4 +1,5 @@
 const path = require('path');
+const router = express.Router();  // ← THIS LINE MUST EXIST
 
 // This creates an absolute path to utils/dataGenerator.js from the project root
 const EInvoiceDataGenerator = require(path.join(__dirname, '..', 'utils', 'dataGenerator'));
