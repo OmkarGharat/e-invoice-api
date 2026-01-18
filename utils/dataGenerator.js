@@ -218,6 +218,34 @@ class EInvoiceDataGenerator {
     return errors;
   }
 
+    // ADD THIS METHOD - generates multiple invoices
+  generateMultipleInvoices(count) {
+    const invoices = [];
+    const supplyTypes = ["B2B", "EXPWP", "SEZWP"];
+    
+    for (let i = 0; i < count; i++) {
+      const randomType = supplyTypes[Math.floor(Math.random() * supplyTypes.length)];
+      invoices.push(this.generateInvoice(randomType));
+    }
+    return invoices;
+  }
+
+  // ALSO ADD THIS METHOD - generates specific scenario invoices
+  generateScenario(scenario) {
+    // Map scenario names to supply types
+    const scenarioMap = {
+      "b2b_interstate": "B2B",
+      "b2b_intrastate": "B2B", 
+      "export": "EXPWP",
+      "sez": "SEZWP",
+      "reverse_charge": "B2B",
+      "credit_note": "B2B"
+    };
+    
+    const supplyType = scenarioMap[scenario] || "B2B";
+    return this.generateInvoice(supplyType);
+  }
+
   generateInvoice(supplyType = "B2B") {
     const states = Object.keys(this.states);
     const sellerState = states[Math.floor(Math.random() * states.length)];
