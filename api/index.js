@@ -1,31 +1,21 @@
-// api/index.js
+// api/index.js - UPDATED VERSION
 const express = require('express');
 const app = express();
-const eInvoiceRoutes = require('../routes/eInvoice');
+const eInvoiceRoutes = require('../routes/eInvoice'); // Path is CORRECT for your structure
 
-// Middleware to parse JSON
 app.use(express.json());
 
-// Use your e-invoice routes
+// Mount routes
 app.use('/api/e-invoice', eInvoiceRoutes);
 
-// A health check endpoint (your frontend calls this)
+// Health endpoint (MUST match frontend call)
 app.get('/health', (req, res) => {
-  res.json({
-    status: 'OK',
-    totalInvoices: 0, // This should be connected to your actual data later
-    timestamp: new Date().toISOString()
+  res.json({ 
+    status: 'OK', 
+    totalInvoices: 20, // Hardcoded for now to test
+    timestamp: new Date().toISOString() 
   });
 });
 
-// Handle 404 for API routes
-app.use('/api/*', (req, res) => {
-  res.status(404).json({
-    success: false,
-    error: 'Endpoint not found',
-    message: `The API endpoint ${req.method} ${req.originalUrl} does not exist`
-  });
-});
-
-// Export the app as a serverless function
+// Export for Vercel
 module.exports = app;
