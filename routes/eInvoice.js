@@ -2,7 +2,6 @@ const path = require('path');
 
 // This creates an absolute path to utils/dataGenerator.js from the project root
 const EInvoiceDataGenerator = require(path.join(__dirname, '..', 'utils', 'dataGenerator'));
-const dataGenerator = new EInvoiceDataGenerator();
 
 const dataGenerator = new EInvoiceDataGenerator();
 
