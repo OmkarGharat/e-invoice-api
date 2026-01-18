@@ -480,6 +480,60 @@ router.get('/sample', (req, res) => {
   });
 });
 
+// Add this route for /samples (plural)
+router.get('/samples', (req, res) => {
+  try {
+    const testSamples = dataGenerator.getTestSamples();
+    const samples = Object.keys(testSamples).map(key => {
+      const sample = testSamples[key];
+      return {
+        id: parseInt(key),
+        type: sample.TranDtls.SupTyp,
+        description: dataGenerator.getSampleDescription(parseInt(key)),
+        totalValue: sample.ValDtls.TotInvVal,
+        invoiceNo: sample.DocDtls.No
+      };
+    });
+    
+    res.json({
+      success: true,
+      data: samples
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error loading samples',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/e-invoice/filter-options - Get filter metadata
+router.get('/filter-options', (req, res) => {
+  try {
+    res.json({
+      success: true,
+      data: {
+        statuses: ['Generated', 'Cancelled'],
+        supplyTypes: ['B2B', 'EXPWP', 'EXPWOP', 'SEZWP', 'SEZWOP', 'DEXP'],
+        states: Object.keys(dataGenerator.states).map(code => ({
+          code: code,
+          name: dataGenerator.states[code].name
+        })),
+        documentTypes: ['INV', 'CRN', 'DBN']
+      },
+      message: 'Filter options loaded successfully'
+    });
+  } catch (error) {
+    console.error('Error in /filter-options endpoint:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error loading filter options',
+      error: error.message
+    });
+  }
+});
+
 // Get validation rules
 router.get('/validation-rules', (req, res) => {
   res.json({
