@@ -1,5 +1,5 @@
 // API Base URL
-const API_BASE = '';
+// const API_BASE = '';
 
 // Global function definitions
 window.testEndpoint = async function(endpoint) {
