@@ -480,6 +480,51 @@ router.get('/sample', (req, res) => {
   });
 });
 
+// Get specific sample by ID
+router.get('/sample/:id', (req, res) => {
+  try {
+    const id = req.params.id;
+    const samples = dataGenerator.getTestSamples();
+    
+    if (samples[id]) {
+      const sample = samples[id];
+      res.json({
+        success: true,
+        data: samples[id],
+        sampleId: parseInt(id),
+        description: dataGenerator.getSampleDescription(id),
+        type: samples[id].TranDtls.SupTyp,
+        metadata: {
+             id: parseInt(id),
+             type: sample.TranDtls.SupTyp,
+             description: dataGenerator.getSampleDescription(id),
+             invoiceNo: sample.DocDtls.No,
+             totalValue: sample.ValDtls.TotInvVal,
+             documentType: sample.DocDtls.Typ,
+             sellerState: sample.SellerDtls.Stcd,
+             buyerState: sample.BuyerDtls.Stcd,
+             isInterstate: sample.SellerDtls.Stcd !== sample.BuyerDtls.Pos,
+             reverseCharge: sample.TranDtls.RegRev === 'Y',
+             itemCount: sample.ItemList ? sample.ItemList.length : 0,
+             invoiceDate: sample.DocDtls.Dt,
+             endpoint: `/api/e-invoice/sample/${id}`
+        }
+      });
+    } else {
+      res.status(404).json({
+        success: false,
+        message: `Sample ${id} not found. Available samples: ${Object.keys(samples).join(', ')}`,
+        availableSamples: Object.keys(samples)
+      });
+    }
+  } catch (error) {
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
+    });
+  }
+});
+
 // Add this route for /samples (plural)
 router.get('/samples', (req, res) => {
   try {
