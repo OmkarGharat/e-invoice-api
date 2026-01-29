@@ -7,7 +7,7 @@ const app = express();
 
 // Middleware
 app.use(cors());
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '100kb' })); // Limit payload to 100kb to prevent parsing crashes
 
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
@@ -817,12 +817,34 @@ app.get('/api/e-invoice/search', (req, res) => {
   }
 });
 
-// Keep other endpoints (they remain the same)
-// ... (generate, generate-dynamic, validate, cancel, etc.)
+// Mount the E-Invoice functionality (Invoices, Generation, Stats, etc.)
+// This router handles all /api/e-invoice/* endpoints not already defined above
+const eInvoiceRoutes = require('./routes/eInvoice');
+app.use('/api/e-invoice', eInvoiceRoutes);
 
 // Error handling
 app.use((error, req, res, next) => {
+  // Handle SyntaxError (Malformed JSON) from body-parser
+  if (error instanceof SyntaxError && error.status === 400 && 'body' in error) {
+    return res.status(400).json({
+      success: false,
+      error: 'Bad Request',
+      message: 'Invalid JSON payload format'
+    });
+  }
+
+  // Handle PayloadTooLargeError (Request Entity Too Large)
+  if (error.type === 'entity.too.large') {
+    return res.status(413).json({
+      success: false,
+      error: 'Payload Too Large',
+      message: 'Request body exceeds the 100kb limit'
+    });
+  }
+
+  // Log only unexpected 500 errors
   console.error('Error:', error);
+
   res.status(500).json({
     success: false,
     error: 'Server Error',
