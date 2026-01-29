@@ -488,24 +488,28 @@
                                 <div class="card-body">
                                     <h6 class="text-light mb-3">Strict Content-Type Check</h6>
                                     <div class="d-grid gap-2 mb-4">
-                                        <button class="btn btn-outline-success" onclick="testEdge('strictParams')">
+                                        <button class="btn btn-outline-success text-start"
+                                            onclick="testEdge('strictParams')">
                                             ✅ valid JSON + CSRF
                                         </button>
-                                        <button class="btn btn-outline-danger" onclick="testEdge('missingContentType')">
+                                        <button class="btn btn-outline-danger text-start"
+                                            onclick="testEdge('missingContentType')">
                                             ❌ Missing Content-Type (400/415)
                                         </button>
-                                        <button class="btn btn-outline-danger" onclick="testEdge('wrongAccept')">
+                                        <button class="btn btn-outline-danger text-start"
+                                            onclick="testEdge('wrongAccept')">
                                             ❌ Accept: application/xml (406)
                                         </button>
                                     </div>
 
                                     <h6 class="text-light mb-3">Custom & Conditional Headers</h6>
                                     <div class="d-grid gap-2">
-                                        <button class="btn btn-outline-danger"
+                                        <button class="btn btn-outline-danger text-start"
                                             onclick="testEdge('missingCustomHeader')">
                                             ❌ Missing X-Tenant-Id (400)
                                         </button>
-                                        <button class="btn btn-outline-warning" onclick="testEdge('guestAuthFail')">
+                                        <button class="btn btn-outline-warning text-start"
+                                            onclick="testEdge('guestAuthFail')">
                                             ❌ Guest + Auth Header (400)
                                         </button>
                                     </div>
@@ -522,20 +526,24 @@
                                 <div class="card-body">
                                     <h6 class="text-light mb-3">Bearer Token States</h6>
                                     <div class="d-grid gap-2 mb-4">
-                                        <button class="btn btn-outline-danger" onclick="testEdge('expiredToken')">
+                                        <button class="btn btn-outline-danger text-start"
+                                            onclick="testEdge('expiredToken')">
                                             ❌ Expired Token (401)
                                         </button>
-                                        <button class="btn btn-outline-danger" onclick="testEdge('missingBearer')">
+                                        <button class="btn btn-outline-danger text-start"
+                                            onclick="testEdge('missingBearer')">
                                             ❌ Missing 'Bearer ' Prefix (401)
                                         </button>
                                     </div>
 
                                     <h6 class="text-light mb-3">Scope & Permissions</h6>
                                     <div class="d-grid gap-2">
-                                        <button class="btn btn-outline-danger" onclick="testEdge('wrongScope')">
+                                        <button class="btn btn-outline-danger text-start"
+                                            onclick="testEdge('wrongScope')">
                                             ❌ Read-Only Token vs Write API (403)
                                         </button>
-                                        <button class="btn btn-outline-success" onclick="testEdge('validScope')">
+                                        <button class="btn btn-outline-success text-start"
+                                            onclick="testEdge('validScope')">
                                             ✅ Write Token vs Write API (200)
                                         </button>
                                     </div>
