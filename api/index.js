@@ -4,34 +4,36 @@ console.log('⏳ API Function is starting...');
 try {
   const express = require('express');
   const app = express();
-  
+
   // Try to load the routes
   console.log('⏳ Attempting to require routes/eInvoice...');
   const eInvoiceRoutes = require('../routes/eInvoice');
+  const authRoutes = require('../routes/auth');
   console.log('✅ Routes loaded successfully');
-  
+
   app.use(express.json());
   app.use('/api/e-invoice', eInvoiceRoutes);
-  
+  app.use('/api/auth', authRoutes);
+
   // Health endpoint
   app.get('/health', (req, res) => {
     console.log('✅ Health check called');
-    res.json({ 
-      status: 'OK', 
+    res.json({
+      status: 'OK',
       totalInvoices: 0,
-      timestamp: new Date().toISOString() 
+      timestamp: new Date().toISOString()
     });
   });
-  
+
   // Export the app
   console.log('✅ API Function setup complete');
   module.exports = app;
-  
+
 } catch (error) {
   // This will log the exact error to Vercel's logs
   console.error('❌ FATAL ERROR during API setup:', error);
   console.error('Error stack:', error.stack);
-  
+
   // Export a simple app that shows the error
   const express = require('express');
   const errorApp = express();

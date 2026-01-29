@@ -12,6 +12,165 @@ app.use(bodyParser.json());
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Import Security Middleware (Block 3 Edge Cases)
+const security = require('./middleware/security');
+
+// 1. Rate Limit Headers (Response)
+// For demonstration, we won't block globally to avoid locking you out.
+// app.use(security.rateLimiter); // Uncomment to enable global rate limiting
+
+// 2. Strict Header Validation for API Routes
+app.use('/api', security.validateAccept);
+app.use('/api', security.requireJsonContent);
+
+// Import Auth Middleware
+const { authMiddleware } = require('./middleware/auth');
+
+// ==================== PROTECTED E-INVOICE ROUTES (REAL WORLD) ====================
+// The user explicitly requested that "Any authentication method must be mandatory".
+// We will enforce Bearer Token for the core E-Invoice routes to simulate a real API.
+// Note: We exclude 'auth' routes and 'edge-cases' (which have their own logic).
+
+// Protect /api/e-invoice endpoints
+app.use('/api/e-invoice', (req, res, next) => {
+  // Whitelist specific public read-only endpoints if needed, but user asked for strictness.
+  // We will allow 'stats' and 'samples' to be public for the UI dashboard to work initially,
+  // but actions like generate/cancel MUST be protected.
+
+  // Allow public access to harmless metadata (optional, but good for UI)
+  if (req.path === '/stats' || req.path === '/samples' || req.path === '/filter-options' || req.path.startsWith('/sample/')) {
+    return next();
+  }
+
+  // Enforce Universal Auth (API Key, Basic, or Bearer)
+  return authMiddleware.anyAuth(req, res, next);
+});
+
+// ==================== EDGE CASE TESTING ENDPOINTS ====================
+
+// 7. Rate Limiting Test Endpoint
+app.get('/api/edge-cases/rate-limit', security.rateLimiter, (req, res) => {
+  res.json({
+    success: true,
+    message: 'Request successful. Rate limit not exceeded.',
+    limit: res.getHeader('X-RateLimit-Limit'),
+    remaining: res.getHeader('X-RateLimit-Remaining')
+  });
+});
+
+// CSRF Token Generation (for testing double-submit pattern)
+app.get('/api/csrf-token', (req, res) => {
+  const token = 'csrf-' + Math.random().toString(36).substr(2, 9);
+  // Set in Cookie
+  res.cookie('CSRF-TOKEN', token);
+  // Return in Body (client should put in Header)
+  res.json({ csrfToken: token });
+});
+
+// Strict Security Test Endpoint (Requires CSRF + Headers)
+app.post('/api/edge-cases/strict-post', security.csrfProtection, (req, res) => {
+  res.json({
+    success: true,
+    message: 'Passed Content-Type, Accept, and CSRF checks',
+    headers: req.headers
+  });
+});
+
+// Custom Header Test
+app.get('/api/edge-cases/custom-header', (req, res) => {
+  const tenantId = req.headers['x-tenant-id'];
+  if (!tenantId) {
+    return res.status(400).json({
+      success: false,
+      error: 'Bad Request',
+      message: 'Missing mandatory X-Tenant-Id header'
+    });
+  }
+  res.json({
+    success: true,
+    tenantId: tenantId
+  });
+});
+
+// Conditional Header Logic (Guest vs Auth)
+app.get('/api/edge-cases/conditional-auth', (req, res) => {
+  const auth = req.headers.authorization;
+  if (req.query.type === 'guest') {
+    if (auth) {
+      return res.status(400).json({
+        success: false,
+        error: 'Bad Request',
+        message: 'Guest flow should not have Authorization header'
+      });
+    }
+    return res.json({ success: true, mode: 'guest' });
+  }
+
+  if (!auth) {
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
+  }
+  res.json({ success: true, mode: 'authenticated' });
+});
+
+// Scope Protection Test
+// Requires 'write' scope. Use token "read-only-token" to fail this.
+// const { authMiddleware } = require('./middleware/auth'); // Removed duplicate
+app.get('/api/edge-cases/scope-protected', authMiddleware.oauth2, authMiddleware.requireScope('write'), (req, res) => {
+  res.json({
+    success: true,
+    message: 'You have write access!',
+    scopes: req.auth.scopes
+  });
+});
+
+// Cookie Override Pattern
+// Sets multiple cookies to demonstrate "Last One Wins"
+app.post('/api/edge-cases/cookie-override', (req, res) => {
+  // In Node.js/Express, setting the same header key twice usually requires an array or specific handling
+  // Standard response.cookie overwrites. To demonstrate multiple Set-Cookie headers:
+
+  res.setHeader('Set-Cookie', [
+    'JSESSIONID=old-session-id; Path=/',
+    'JSESSIONID=new-session-id-WINNER; Path=/'
+  ]);
+
+  res.json({
+    success: true,
+    message: 'Cookies set. Check your browser/client. The last "Set-Cookie" header usually wins.',
+    expectedValue: 'new-session-id-WINNER'
+  });
+});
+
+// Session Fixation Vulnerability Simulation
+// Accepts a provided session ID (Weak) vs Rotating it (Strong)
+app.post('/api/edge-cases/session-fixation', (req, res) => {
+  const providedSession = req.query.session_id || req.body.session_id;
+
+  if (providedSession) {
+    // VULNERABLE BEHAVIOR: Accepting the client's ID
+    res.setHeader('Set-Cookie', `JSESSIONID=${providedSession}; Path=/; HttpOnly`);
+    return res.json({
+      success: true,
+      warning: 'VULNERABLE: Server accepted client-provided session ID',
+      sessionId: providedSession
+    });
+  }
+
+  // SECURE BEHAVIOR: Generating new ID
+  const newId = 'secure-' + Math.random().toString(36).substr(2);
+  res.setHeader('Set-Cookie', `JSESSIONID=${newId}; Path=/; HttpOnly`);
+  res.json({
+    success: true,
+    type: 'Secure',
+    sessionId: newId
+  });
+});
+
+
+// Import Auth Routes
+const authRoutes = require('./routes/auth');
+app.use('/api/auth', authRoutes);
+
 // Import data generator
 const EInvoiceDataGenerator = require('./utils/dataGenerator');
 const dataGenerator = new EInvoiceDataGenerator();
@@ -52,24 +211,24 @@ class GenericFilter {
    */
   apply(data, filters, fieldMapping = {}) {
     let filteredData = [...data];
-    
+
     // Apply each filter dynamically
     Object.keys(filters).forEach(filterKey => {
       if (filterKey === 'page' || filterKey === 'limit' || filterKey === 'sortBy' || filterKey === 'sortOrder') {
         return; // Skip pagination/sorting params
       }
-      
+
       const filterValue = filters[filterKey];
       if (filterValue === undefined || filterValue === '') {
         return;
       }
-      
+
       // Map query param to actual field name
       const actualField = fieldMapping[filterKey] || filterKey;
-      
+
       filteredData = this.applySingleFilter(filteredData, actualField, filterValue);
     });
-    
+
     return filteredData;
   }
 
@@ -80,7 +239,7 @@ class GenericFilter {
     return data.filter(item => {
       // Get the value from the item (support nested paths)
       const itemValue = this.getValueFromPath(item, field);
-      
+
       // Handle special filter patterns
       if (typeof value === 'string') {
         // Multiple values (OR logic) - comma separated
@@ -88,7 +247,7 @@ class GenericFilter {
           const values = value.split(',').map(v => v.trim());
           return values.some(v => this.compareValues(itemValue, v));
         }
-        
+
         // Range filters (lt:, gt:, eq:, ne:)
         if (value.startsWith('lt:')) {
           const numValue = parseFloat(value.substring(3));
@@ -106,13 +265,13 @@ class GenericFilter {
           const compareValue = value.substring(3);
           return !this.compareValues(itemValue, compareValue);
         }
-        
+
         // Boolean filters
         if (value === 'true' || value === 'false') {
           const boolValue = value === 'true';
           return itemValue === boolValue;
         }
-        
+
         // Date range (from:to)
         if (value.includes(':')) {
           const [dateFrom, dateTo] = value.split(':');
@@ -123,13 +282,13 @@ class GenericFilter {
             return itemDate >= fromDate && itemDate <= toDate;
           }
         }
-        
+
         // Text search (case-insensitive partial match)
         if (field === 'search') {
           return this.searchInItem(item, value);
         }
       }
-      
+
       // Default: exact match (case-insensitive for strings)
       return this.compareValues(itemValue, value);
     });
@@ -150,17 +309,17 @@ class GenericFilter {
     if (typeof itemValue === 'number' && !isNaN(filterValue)) {
       return itemValue === parseFloat(filterValue);
     }
-    
+
     // Handle booleans
     if (typeof itemValue === 'boolean') {
       return itemValue === (filterValue === 'true');
     }
-    
+
     // Handle strings (case-insensitive)
     if (typeof itemValue === 'string') {
       return itemValue.toLowerCase() === filterValue.toLowerCase();
     }
-    
+
     // Default strict equality
     return itemValue == filterValue;
   }
@@ -170,7 +329,7 @@ class GenericFilter {
    */
   searchInItem(item, searchTerm) {
     const term = searchTerm.toLowerCase();
-    
+
     // Define searchable fields (can be customized)
     const searchableFields = [
       'irn',
@@ -181,7 +340,7 @@ class GenericFilter {
       'invoiceData.BuyerDtls.Gstin',
       'status'
     ];
-    
+
     return searchableFields.some(field => {
       const value = this.getValueFromPath(item, field);
       return value && value.toString().toLowerCase().includes(term);
@@ -193,11 +352,11 @@ class GenericFilter {
    */
   sort(data, sortBy = 'generatedAt', sortOrder = 'desc') {
     const order = sortOrder === 'desc' ? -1 : 1;
-    
+
     return [...data].sort((a, b) => {
       const aValue = this.getValueFromPath(a, sortBy);
       const bValue = this.getValueFromPath(b, sortBy);
-      
+
       if (aValue < bValue) return -1 * order;
       if (aValue > bValue) return 1 * order;
       return 0;
@@ -212,7 +371,7 @@ class GenericFilter {
     const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
     const startIndex = (pageNum - 1) * limitNum;
     const endIndex = pageNum * limitNum;
-    
+
     return {
       data: data.slice(startIndex, endIndex),
       total: data.length,
@@ -287,8 +446,8 @@ app.get('/', (req, res) => {
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     message: 'E-Invoice API is running smoothly',
     timestamp: new Date().toISOString(),
     totalInvoices: invoices.length,
@@ -308,24 +467,24 @@ app.get('/api/e-invoice/invoices', (req, res) => {
   try {
     // Parse query parameters
     const { page = 1, limit = 10, sortBy = 'generatedAt', sortOrder = 'desc', ...filters } = req.query;
-    
+
     // Validate parameters
     const validPage = Math.max(1, parseInt(page));
     const validLimit = Math.min(100, Math.max(1, parseInt(limit)));
     const validSortOrder = ['asc', 'desc'].includes(sortOrder) ? sortOrder : 'desc';
-    
+
     // Apply generic filtering
     let filteredData = filter.apply(invoices, filters);
-    
+
     // Apply sorting
     filteredData = filter.sort(filteredData, sortBy, validSortOrder);
-    
+
     // Apply pagination
     const paginated = filter.paginate(filteredData, validPage, validLimit);
-    
+
     // Format response
     const responseData = paginated.data.map(formatInvoice);
-    
+
     const response = {
       success: true,
       data: responseData,
@@ -350,7 +509,7 @@ app.get('/api/e-invoice/invoices', (req, res) => {
         'invoiceData.ValDtls.TotInvVal'
       ])
     };
-    
+
     // Set custom headers
     res.set({
       'X-Total-Count': paginated.total,
@@ -360,9 +519,9 @@ app.get('/api/e-invoice/invoices', (req, res) => {
       'X-Has-Next': paginated.hasNext,
       'X-Has-Prev': paginated.hasPrev
     });
-    
+
     res.json(response);
-    
+
   } catch (error) {
     console.error('Error in /invoices:', error);
     res.status(500).json({
@@ -378,27 +537,27 @@ app.get('/api/e-invoice/invoices', (req, res) => {
 app.get('/api/e-invoice/samples', (req, res) => {
   try {
     const samples = dataGenerator.getTestSamples();
-    
+
     // Convert samples to array format
-    let samplesArray = Object.entries(samples).map(([id, sample]) => 
+    let samplesArray = Object.entries(samples).map(([id, sample]) =>
       formatSample(id, sample)
     );
-    
+
     // Parse query parameters
     const { page = 1, limit = 10, sortBy = 'id', sortOrder = 'asc', ...filters } = req.query;
-    
+
     // Apply generic filtering if filters present
     if (Object.keys(filters).length > 0) {
       samplesArray = filter.apply(samplesArray, filters);
     }
-    
+
     // Apply sorting
     samplesArray = filter.sort(samplesArray, sortBy, sortOrder);
-    
+
     // Apply pagination
     const { page: pageNum = 1, limit: limitNum = 100 } = req.query;
     const paginated = filter.paginate(samplesArray, pageNum, limitNum);
-    
+
     res.json({
       success: true,
       data: paginated.data,
@@ -416,11 +575,11 @@ app.get('/api/e-invoice/samples', (req, res) => {
         order: sortOrder
       }
     });
-    
+
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      error: error.message 
+      error: error.message
     });
   }
 });
@@ -430,7 +589,7 @@ app.get('/api/e-invoice/sample/:id', (req, res) => {
   try {
     const id = req.params.id;
     const samples = dataGenerator.getTestSamples();
-    
+
     if (samples[id]) {
       res.json({
         success: true,
@@ -444,15 +603,15 @@ app.get('/api/e-invoice/sample/:id', (req, res) => {
       res.status(404).json({
         success: false,
         message: `Sample ${id} not found. Available samples: 1-${Object.keys(samples).length}`,
-        availableSamples: Object.keys(samples).map(id => 
+        availableSamples: Object.keys(samples).map(id =>
           formatSample(id, samples[id])
         )
       });
     }
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      error: error.message 
+      error: error.message
     });
   }
 });
@@ -461,14 +620,14 @@ app.get('/api/e-invoice/sample/:id', (req, res) => {
 app.get('/api/e-invoice/fields', (req, res) => {
   try {
     // Get field info from invoices
-    const invoiceFields = invoices.length > 0 ? 
+    const invoiceFields = invoices.length > 0 ?
       Object.keys(formatInvoice(invoices[0])) : [];
-    
+
     // Get field info from samples
     const samples = dataGenerator.getTestSamples();
     const sampleFields = Object.keys(samples).length > 0 ?
       Object.keys(formatSample('1', samples[1])) : [];
-    
+
     // Get nested fields
     const nestedFields = [
       'invoiceData.TranDtls.SupTyp',
@@ -489,7 +648,7 @@ app.get('/api/e-invoice/fields', (req, res) => {
       'invoiceData.ValDtls.CgstVal',
       'invoiceData.ValDtls.SgstVal'
     ];
-    
+
     const fieldTypes = {
       string: ['irn', 'invoiceNo', 'sellerGstin', 'buyerGstin', 'sellerName', 'buyerName', 'status', 'supplyType', 'documentType', 'sellerState', 'buyerState'],
       number: ['id', 'totalValue', 'itemCount'],
@@ -497,7 +656,7 @@ app.get('/api/e-invoice/fields', (req, res) => {
       date: ['generatedAt', 'invoiceDate'],
       nested: nestedFields
     };
-    
+
     res.json({
       success: true,
       data: {
@@ -535,10 +694,65 @@ app.get('/api/e-invoice/fields', (req, res) => {
         }
       }
     });
-    
+
   } catch (error) {
     res.status(500).json({
       success: false,
+      error: error.message
+    });
+  }
+});
+
+// Get statistics
+app.get('/api/e-invoice/stats', (req, res) => {
+  try {
+    const stats = {
+      totalInvoices: invoices.length,
+      generated: invoices.filter(inv => inv.status === 'Generated').length,
+      cancelled: invoices.filter(inv => inv.status === 'Cancelled').length,
+      bySupplyType: {},
+      byState: {},
+      totalValue: invoices.reduce((sum, inv) => sum + inv.invoiceData.ValDtls.TotInvVal, 0)
+    };
+
+    invoices.forEach(inv => {
+      const supplyType = inv.invoiceData.TranDtls.SupTyp;
+      const state = inv.invoiceData.SellerDtls.Stcd;
+
+      stats.bySupplyType[supplyType] = (stats.bySupplyType[supplyType] || 0) + 1;
+      stats.byState[state] = (stats.byState[state] || 0) + 1;
+    });
+
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// GET /api/e-invoice/filter-options - Get filter metadata
+app.get('/api/e-invoice/filter-options', (req, res) => {
+  try {
+    res.json({
+      success: true,
+      data: {
+        statuses: ['Generated', 'Cancelled'],
+        supplyTypes: ['B2B', 'EXPWP', 'EXPWOP', 'SEZWP', 'SEZWOP', 'DEXP'],
+        states: Object.keys(dataGenerator.states || {}).map(code => ({
+          code: code,
+          name: dataGenerator.states[code]?.name || code
+        })),
+        documentTypes: ['INV', 'CRN', 'DBN']
+      },
+      message: 'Filter options loaded successfully'
+    });
+  } catch (error) {
+    console.error('Error in /filter-options endpoint:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error loading filter options',
       error: error.message
     });
   }
@@ -548,16 +762,16 @@ app.get('/api/e-invoice/fields', (req, res) => {
 app.get('/api/e-invoice/search', (req, res) => {
   try {
     const { q: query, type = 'all', ...filters } = req.query;
-    
+
     if (!query) {
       return res.status(400).json({
         success: false,
         message: 'Search query (q) is required'
       });
     }
-    
+
     let results = [];
-    
+
     // Search in invoices
     if (type === 'all' || type === 'invoices') {
       const invoiceResults = filter.apply(invoices, { search: query, ...filters });
@@ -567,14 +781,14 @@ app.get('/api/e-invoice/search', (req, res) => {
         score: 1.0
       })));
     }
-    
+
     // Search in samples
     if (type === 'all' || type === 'samples') {
       const samples = dataGenerator.getTestSamples();
-      const sampleArray = Object.entries(samples).map(([id, sample]) => 
+      const sampleArray = Object.entries(samples).map(([id, sample]) =>
         formatSample(id, sample)
       );
-      
+
       const sampleResults = filter.apply(sampleArray, { search: query, ...filters });
       results.push(...sampleResults.map(sample => ({
         type: 'sample',
@@ -582,10 +796,10 @@ app.get('/api/e-invoice/search', (req, res) => {
         score: 1.0
       })));
     }
-    
+
     // Sort by relevance (simple implementation)
     results.sort((a, b) => b.score - a.score);
-    
+
     res.json({
       success: true,
       query,
@@ -594,7 +808,7 @@ app.get('/api/e-invoice/search', (req, res) => {
       results,
       filters
     });
-    
+
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -609,7 +823,7 @@ app.get('/api/e-invoice/search', (req, res) => {
 // Error handling
 app.use((error, req, res, next) => {
   console.error('Error:', error);
-  res.status(500).json({ 
+  res.status(500).json({
     success: false,
     error: 'Server Error',
     message: 'Something went wrong'
@@ -643,10 +857,20 @@ module.exports = app;
 
 // For local development
 if (require.main === module) {
-  const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`📖 Documentation: http://localhost:${PORT}`);
-    console.log(`🔧 Generic filtering enabled - works for ANY field!`);
-  });
+  const startServer = (port) => {
+    const server = app.listen(port, () => {
+      console.log(`🚀 Server running on port ${port}`);
+      console.log(`📖 Documentation: http://localhost:${port}`);
+      console.log(`🔧 Generic filtering enabled - works for ANY field!`);
+    }).on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.log(`⚠️ Port ${port} is busy, trying ${port + 1}...`);
+        startServer(port + 1);
+      } else {
+        console.error(err);
+      }
+    });
+  };
+
+  startServer(process.env.PORT || 3000);
 }

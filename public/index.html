@@ -15,305 +15,808 @@
 
 <body class="bg-dark text-light">
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary sticky-top">
         <div class="container">
             <a class="navbar-brand fw-bold" href="#">
                 <i class="bi bi-receipt me-2"></i>
                 E-Invoice API
             </a>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="https://github.com/OmkarGharat/e-invoice-api" target="_blank">
-                    <i class="bi bi-github me-1"></i>GitHub
-                </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 nav-pills" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active text-light" id="home-tab" data-bs-toggle="tab"
+                            data-bs-target="#home" type="button" role="tab">
+                            <i class="bi bi-house me-2"></i>Home
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link text-light" id="auth-tab" data-bs-toggle="tab" data-bs-target="#auth"
+                            type="button" role="tab">
+                            <i class="bi bi-shield-lock me-2"></i>Authentication
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link text-light" id="edge-tab" data-bs-toggle="tab" data-bs-target="#edge"
+                            type="button" role="tab">
+                            <i class="bi bi-exclamation-triangle me-2"></i>Edge Cases
+                        </button>
+                    </li>
+                </ul>
+
             </div>
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <section class="hero-section bg-gradient py-5">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-8">
-                    <h1 class="display-4 fw-bold mb-3">
-                        <i class="bi bi-receipt-cutoff me-3"></i>
-                        E-Invoice Test API
-                    </h1>
-                    <p class="lead mb-4 opacity-75">
-                        Complete testing API for Indian E-Invoicing system with realistic sample data.
-                        Perfect for developers testing GST integration.
-                    </p>
-                    <div class="d-flex flex-wrap gap-2 mb-4">
-                        <span class="badge bg-success fs-6">FREE FOREVER</span>
-                        <span class="badge bg-warning text-dark fs-6">TESTING ONLY</span>
-                        <!-- <span class="badge bg-info fs-6">ALWAYS ONLINE</span> -->
-                        <span class="badge bg-secondary fs-6">NO AUTH REQUIRED</span>
-                    </div>
-                    <div class="d-flex gap-2 flex-wrap">
-                        <!-- <button class="btn btn-primary btn-lg" onclick="testEndpoint('/health')">
-                            <i class="bi bi-play-circle me-2"></i>Test API
-                        </button> -->
-                        <a href="#samples" class="btn btn-outline-light btn-lg">
-                            <i class="bi bi-collection me-2"></i>View Samples
-                        </a>
-                    </div>
-                </div>
-                <div class="col-lg-4 text-center">
-                    <div class="hero-icon">
-                        <i class="bi bi-cloud-check display-1 text-primary"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
 
-    <!-- Quick Stats -->
-    <section class="py-4 bg-dark">
-        <div class="container">
-            <div class="row g-4" id="statsContainer">
-                <div class="col-md-3 col-6">
-                    <div class="text-center">
-                        <div class="h2 mb-1 text-primary" id="totalInvoices">--</div>
-                        <div class="text-muted">Total Invoices</div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-6">
-                    <div class="text-center">
-                        <div class="h2 mb-1 text-success" id="apiStatus">--</div>
-                        <div class="text-muted">API Status</div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-6">
-                    <div class="text-center">
-                        <div class="h2 mb-1 text-info" id="samplesCount">7</div>
-                        <div class="text-muted">Test Samples</div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-6">
-                    <div class="text-center">
-                        <div class="h2 mb-1 text-warning" id="totalValue">--</div>
-                        <div class="text-muted">Total Value</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
 
     <!-- Main Content -->
     <div class="container py-5">
-        <!-- Features Section -->
-        <section class="mb-5">
-            <h2 class="h3 mb-4"><i class="bi bi-stars me-2"></i>Core Features</h2>
-            <div class="row g-4">
-                <div class="col-md-6 col-lg-3">
-                    <div class="card h-100 bg-secondary border-0">
-                        <div class="card-body text-center">
-                            <i class="bi bi-file-earmark-plus display-6 text-primary mb-3"></i>
-                            <h5 class="card-title">Generate Invoices</h5>
-                            <p class="card-text text-muted">Create E-Invoices with auto-generated IRN and QR codes</p>
+
+
+
+        <div class="tab-content" id="myTabContent">
+            <!-- HOME TAB -->
+            <div class="tab-pane fade show active" id="home" role="tabpanel">
+
+                <!-- Hero Section (Moved Inside Home Tab) -->
+                <section class="hero-section bg-gradient py-5 mb-4 rounded-3">
+                    <div class="container">
+                        <div class="row align-items-center">
+                            <div class="col-lg-8">
+                                <h1 class="display-4 fw-bold mb-3">
+                                    <i class="bi bi-receipt-cutoff me-3"></i>
+                                    E-Invoice Test API
+                                </h1>
+                                <p class="lead mb-4 opacity-75">
+                                    Complete testing API for Indian E-Invoicing system with realistic sample data.
+                                    Perfect for developers testing GST integration.
+                                </p>
+                                <div class="d-flex flex-wrap gap-2 mb-4">
+                                    <span class="badge bg-success fs-6">FREE FOREVER</span>
+                                    <span class="badge bg-warning text-dark fs-6">TESTING ONLY</span>
+                                    <span class="badge bg-secondary fs-6">AUTH REQUIRED</span>
+                                </div>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <a href="#samples" class="btn btn-outline-light btn-lg">
+                                        <i class="bi bi-collection me-2"></i>View Samples
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 text-center">
+                                <div class="hero-icon">
+                                    <i class="bi bi-cloud-check display-1 text-primary"></i>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-6 col-lg-3">
-                    <div class="card h-100 bg-secondary border-0">
-                        <div class="card-body text-center">
-                            <i class="bi bi-check-circle display-6 text-success mb-3"></i>
-                            <h5 class="card-title">Validate Data</h5>
-                            <p class="card-text text-muted">Validate invoice data against business rules</p>
+                </section>
+
+                <!-- Quick Stats (Moved Inside Home Tab) -->
+                <section class="mb-5">
+                    <div class="row g-4" id="statsContainer">
+                        <div class="col-md-3 col-6">
+                            <div class="text-center">
+                                <div class="h2 mb-1 text-primary" id="totalInvoices">--</div>
+                                <div class="text-muted">Total Invoices</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="text-center">
+                                <div class="h2 mb-1 text-success" id="apiStatus">--</div>
+                                <div class="text-muted">API Status</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="text-center">
+                                <div class="h2 mb-1 text-info" id="samplesCount">7</div>
+                                <div class="text-muted">Test Samples</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="text-center">
+                                <div class="h2 mb-1 text-warning" id="totalValue">--</div>
+                                <div class="text-muted">Total Value</div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-6 col-lg-3">
-                    <div class="card h-100 bg-secondary border-0">
-                        <div class="card-body text-center">
-                            <i class="bi bi-x-circle display-6 text-danger mb-3"></i>
-                            <h5 class="card-title">Cancel Invoices</h5>
-                            <p class="card-text text-muted">Cancel generated invoices with proper audit trail</p>
+                </section>
+                <!-- Features Section -->
+                <section class="mb-5">
+                    <h2 class="h3 mb-4"><i class="bi bi-stars me-2"></i>Core Features</h2>
+                    <div class="row g-4">
+                        <div class="col-md-6 col-lg-3">
+                            <div class="card h-100 bg-secondary border-0">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-file-earmark-plus display-6 text-primary mb-3"></i>
+                                    <h5 class="card-title">Generate Invoices</h5>
+                                    <p class="card-text text-muted">Create E-Invoices with auto-generated IRN and QR
+                                        codes</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <div class="card h-100 bg-secondary border-0">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-check-circle display-6 text-success mb-3"></i>
+                                    <h5 class="card-title">Validate Data</h5>
+                                    <p class="card-text text-muted">Validate invoice data against business rules</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <div class="card h-100 bg-secondary border-0">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-x-circle display-6 text-danger mb-3"></i>
+                                    <h5 class="card-title">Cancel Invoices</h5>
+                                    <p class="card-text text-muted">Cancel generated invoices with proper audit trail
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <div class="card h-100 bg-secondary border-0">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-qr-code display-6 text-info mb-3"></i>
+                                    <h5 class="card-title">QR Generation</h5>
+                                    <p class="card-text text-muted">Auto-generate QR codes for invoice verification</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-6 col-lg-3">
-                    <div class="card h-100 bg-secondary border-0">
-                        <div class="card-body text-center">
-                            <i class="bi bi-qr-code display-6 text-info mb-3"></i>
-                            <h5 class="card-title">QR Generation</h5>
-                            <p class="card-text text-muted">Auto-generate QR codes for invoice verification</p>
+                </section>
+
+                <!-- Test Samples Section -->
+                <section class="mb-5" id="samples">
+                    <h2 class="h3 mb-4"><i class="bi bi-collection me-2"></i>Test Samples</h2>
+                    <p class="text-muted mb-4">Stable, predictable test data for consistent testing scenarios</p>
+                    <div class="row g-4" id="samplesContainer">
+                        <!-- Samples will be loaded dynamically -->
+                    </div>
+                </section>
+
+                <!-- API Endpoints Section -->
+                <section class="mb-5">
+                    <h2 class="h3 mb-4"><i class="bi bi-code-slash me-2"></i>API Endpoints</h2>
+                    <div class="card bg-secondary border-0 mb-3">
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center mb-2"><span
+                                            class="badge bg-success me-2">GET</span><code
+                                            class="flex-grow-1">/health</code></div>
+                                    <div class="d-flex align-items-center mb-2"><span
+                                            class="badge bg-success me-2">GET</span><code
+                                            class="flex-grow-1">/api/e-invoice/invoices</code></div>
+                                    <div class="d-flex align-items-center mb-2"><span
+                                            class="badge bg-success me-2">GET</span><code
+                                            class="flex-grow-1">/api/e-invoice/samples</code></div>
+                                    <div class="d-flex align-items-center mb-2"><span
+                                            class="badge bg-success me-2">GET</span><code
+                                            class="flex-grow-1">/api/e-invoice/sample/1</code></div>
+                                    <div class="d-flex align-items-center mb-2"><span
+                                            class="badge bg-success me-2">GET</span><code
+                                            class="flex-grow-1">/api/e-invoice/stats</code></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center mb-2"><span
+                                            class="badge bg-primary me-2">POST</span><code
+                                            class="flex-grow-1">/api/e-invoice/generate</code></div>
+                                    <div class="d-flex align-items-center mb-2"><span
+                                            class="badge bg-primary me-2">POST</span><code
+                                            class="flex-grow-1">/api/e-invoice/generate-dynamic</code></div>
+                                    <div class="d-flex align-items-center mb-2"><span
+                                            class="badge bg-primary me-2">POST</span><code
+                                            class="flex-grow-1">/api/e-invoice/validate</code></div>
+                                    <div class="d-flex align-items-center mb-2"><span
+                                            class="badge bg-primary me-2">POST</span><code
+                                            class="flex-grow-1">/api/e-invoice/cancel</code></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </section>
+
+                <!-- Filtering Documentation Section -->
+                <section class="mb-5">
+                    <h2 class="h3 mb-4"><i class="bi bi-filter me-2"></i>Advanced Filtering</h2>
+                    <div class="card bg-secondary border-0 mb-3">
+                        <div class="card-body">
+                            <h5 class="mb-3">Available Filter Parameters:</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Basic Filters:</h6>
+                                    <ul class="list-unstyled">
+                                        <li><code>?status=Generated</code></li>
+                                        <li><code>?supplyType=B2B</code></li>
+                                        <li><code>?sellerState=29</code></li>
+                                        <li><code>?buyerState=07</code></li>
+                                        <li><code>?documentType=INV</code></li>
+                                    </ul>
+                                    <h6>Multiple Values (OR logic):</h6>
+                                    <ul class="list-unstyled">
+                                        <li><code>?supplyTypes=B2B,EXPWP,SEZWP</code></li>
+                                        <li><code>?statuses=Generated,Cancelled</code></li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Special Filters:</h6>
+                                    <ul class="list-unstyled">
+                                        <li><code>?interstate=true</code></li>
+                                        <li><code>?reverseCharge=false</code></li>
+                                        <li><code>?totalValue=lt:1000</code></li>
+                                        <li><code>?totalValue=gt:50000</code></li>
+                                        <li><code>?search=INV/2024</code></li>
+                                    </ul>
+                                    <h6>Pagination & Sorting:</h6>
+                                    <ul class="list-unstyled">
+                                        <li><code>?page=2&limit=20</code></li>
+                                        <li><code>?sortBy=totalValue&sortOrder=desc</code></li>
+                                        <li><code>?dateFrom=2024-01-01&dateTo=2024-12-31</code></li>
+                                        <li><code>?minValue=1000&maxValue=10000</code></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <button class="btn btn-outline-light"
+                                    onclick="testEndpoint('/api/e-invoice/filter-options')"><i
+                                        class="bi bi-gear me-2"></i>View All Filter Options</button>
+                            </div>
+                        </div>
+                    </div>
+                    <h5 class="mt-4 mb-3">Filter Testing Examples:</h5>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button class="btn btn-sm btn-outline-info"
+                            onclick="testEndpoint('/api/e-invoice/invoices?supplyType=B2B&status=Generated')">B2B
+                            Generated</button>
+                        <button class="btn btn-sm btn-outline-info"
+                            onclick="testEndpoint('/api/e-invoice/invoices?interstate=true&sortBy=totalValue&sortOrder=desc')">Interstate
+                            High Value</button>
+                        <button class="btn btn-sm btn-outline-info"
+                            onclick="testEndpoint('/api/e-invoice/invoices?supplyTypes=EXPWP,SEZWP')">Exports &
+                            SEZ</button>
+                        <button class="btn btn-sm btn-outline-info"
+                            onclick="testEndpoint('/api/e-invoice/invoices?totalValue=gt:100000')">High Value
+                            Invoices</button>
+                        <button class="btn btn-sm btn-outline-info"
+                            onclick="testEndpoint('/api/e-invoice/invoices?page=2&limit=5')">Page 2 (5 items)</button>
+                    </div>
+                </section>
+
+                <!-- Quick Testing Section (Moved Inside Home Tab) -->
+                <section class="mb-5">
+                    <h2 class="h3 mb-4"><i class="bi bi-lightning-charge me-2"></i>Quick Testing</h2>
+
+                    <div class="card bg-secondary border-0">
+                        <div class="card-body">
+                            <div class="d-flex flex-wrap gap-2 mb-3">
+                                <button class="btn btn-outline-light" onclick="testEndpoint('/health')">
+                                    <i class="bi bi-heart-pulse me-2"></i>Health Check
+                                    <i class="bi bi-info-circle text-muted ms-1" data-bs-toggle="tooltip"
+                                        title="Public Endpoint (No Auth)"></i>
+                                </button>
+                                <button class="btn btn-outline-light" onclick="testEndpoint('/api/e-invoice/invoices')">
+                                    <i class="bi bi-list-ul me-2"></i>View Invoices
+                                    <i class="bi bi-lock-fill text-warning ms-1" data-bs-toggle="tooltip"
+                                        title="Protected: Auto-using API Key"></i>
+                                </button>
+                                <button class="btn btn-outline-light" onclick="testEndpoint('/api/e-invoice/samples')">
+                                    <i class="bi bi-collection me-2"></i>List Samples
+                                    <i class="bi bi-info-circle text-muted ms-1" data-bs-toggle="tooltip"
+                                        title="Public (Whitelisted)"></i>
+                                </button>
+                                <button class="btn btn-outline-light" onclick="testEndpoint('/api/e-invoice/stats')">
+                                    <i class="bi bi-graph-up me-2"></i>View Stats
+                                    <i class="bi bi-info-circle text-muted ms-1" data-bs-toggle="tooltip"
+                                        title="Public (Whitelisted)"></i>
+                                </button>
+                                <button class="btn btn-outline-light"
+                                    onclick="testEndpoint('/api/e-invoice/filter-options')">
+                                    <i class="bi bi-filter me-2"></i>Filter Options
+                                    <i class="bi bi-info-circle text-muted ms-1" data-bs-toggle="tooltip"
+                                        title="Public (Whitelisted)"></i>
+                                </button>
+                                <button class="btn btn-outline-light" onclick="generateInvoice()">
+                                    <i class="bi bi-plus-circle me-2"></i>Generate Invoice
+                                    <i class="bi bi-lock-fill text-warning ms-1" data-bs-toggle="tooltip"
+                                        title="Protected: Auto-using API Key"></i>
+                                </button>
+                            </div>
+                            <div class="mt-2 text-muted small">
+                                <i class="bi bi-shield-check me-1"></i>Note: Protected endpoints automatically use the
+                                default API Key for this demo.
+                            </div>
+
+                            <!-- API Response Display Area -->
+                            <div id="testResult" class="mt-3">
+                                <div class="card bg-dark border-secondary">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <span><i class="bi bi-code-slash me-2"></i>API Response</span>
+                                        <button class="btn btn-sm btn-outline-light" onclick="copyResult()">
+                                            <i class="bi bi-clipboard me-1"></i>Copy
+                                        </button>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <pre id="resultContent" class="text-light mb-0 p-3"
+                                            style="max-height: 400px; overflow-y: auto; background: #1a1d23; border-radius: 0 0 0.375rem 0.375rem; margin: 0;"></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
-        </section>
 
-        <!-- Test Samples Section -->
-        <section class="mb-5" id="samples">
-            <h2 class="h3 mb-4"><i class="bi bi-collection me-2"></i>Test Samples</h2>
-            <p class="text-muted mb-4">Stable, predictable test data for consistent testing scenarios</p>
+            <!-- AUTH TAB -->
+            <div class="tab-pane fade" id="auth" role="tabpanel">
+                <section class="mb-5">
+                    <h2 class="h3 mb-4"><i class="bi bi-key me-2"></i>Authentication Playground</h2>
+                    <p class="text-muted">Test various API authentication methods securely.</p>
 
-            <div class="row g-4" id="samplesContainer">
-                <!-- Samples will be loaded dynamically -->
-            </div>
-        </section>
+                    <!-- Credentials Card -->
+                    <div class="card bg-secondary border-0 mb-4">
+                        <div class="card-header bg-dark border-secondary">
+                            <h5 class="mb-0">1. Get Test Credentials</h5>
+                        </div>
+                        <div class="card-body">
+                            <button class="btn btn-primary mb-3"
+                                onclick="testEndpoint('/api/auth/credentials', 'authTestResult', 'authResultContent')">
+                                <i class="bi bi-eye me-2"></i>Reveal Credentials
+                            </button>
+                            <p class="small text-muted">Click to see the valid API Keys, Usernames, and Passwords for
+                                testing.</p>
+                        </div>
+                    </div>
 
-        <!-- API Endpoints Section -->
-        <section class="mb-5">
-            <h2 class="h3 mb-4"><i class="bi bi-code-slash me-2"></i>API Endpoints</h2>
-
-            <div class="card bg-secondary border-0 mb-3">
-                <div class="card-body">
-                    <div class="row g-3">
+                    <!-- Test Methods -->
+                    <div class="row g-4">
+                        <!-- API Key -->
                         <div class="col-md-6">
-                            <div class="d-flex align-items-center mb-2">
-                                <span class="badge bg-success me-2">GET</span>
-                                <code class="flex-grow-1">/health</code>
-                            </div>
-                            <div class="d-flex align-items-center mb-2">
-                                <span class="badge bg-success me-2">GET</span>
-                                <code class="flex-grow-1">/api/e-invoice/invoices</code>
-                            </div>
-                            <div class="d-flex align-items-center mb-2">
-                                <span class="badge bg-success me-2">GET</span>
-                                <code class="flex-grow-1">/api/e-invoice/samples</code>
-                            </div>
-                            <div class="d-flex align-items-center mb-2">
-                                <span class="badge bg-success me-2">GET</span>
-                                <code class="flex-grow-1">/api/e-invoice/sample/1</code>
-                            </div>
-                            <div class="d-flex align-items-center mb-2">
-                                <span class="badge bg-success me-2">GET</span>
-                                <code class="flex-grow-1">/api/e-invoice/stats</code>
+                            <div class="card h-100 bg-secondary border-0">
+                                <div class="card-body">
+                                    <h5 class="card-title text-info"><i class="bi bi-ticket-detailed me-2"></i>API Key
+                                    </h5>
+                                    <p class="card-text small text-muted">Uses <code>x-api-key</code> header.</p>
+                                    <div class="input-group mb-3">
+                                        <input type="text" class="form-control bg-dark text-light border-secondary"
+                                            id="apiKeyInput" placeholder="Enter API Key">
+                                        <button class="btn btn-outline-info" onclick="testAuth('apiKey')">Test</button>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-danger w-100"
+                                        onclick="testAuth('apiKey', true)">
+                                        <i class="bi bi-shield-x me-1"></i>Test Without Key (401)
+                                    </button>
+                                </div>
                             </div>
                         </div>
+
+                        <!-- Basic Auth -->
                         <div class="col-md-6">
-                            <div class="d-flex align-items-center mb-2">
-                                <span class="badge bg-primary me-2">POST</span>
-                                <code class="flex-grow-1">/api/e-invoice/generate</code>
+                            <div class="card h-100 bg-secondary border-0">
+                                <div class="card-body">
+                                    <h5 class="card-title text-warning"><i class="bi bi-person-badge me-2"></i>Basic
+                                        Auth</h5>
+                                    <p class="card-text small text-muted">Base64 encoded <code>username:password</code>.
+                                    </p>
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control bg-dark text-light border-secondary"
+                                            id="basicUser" placeholder="Username">
+                                        <input type="text" class="form-control bg-dark text-light border-secondary"
+                                            id="basicPass" placeholder="Password">
+                                    </div>
+                                    <button class="btn btn-outline-warning w-100 mb-2" onclick="testAuth('basic')">Test
+                                        Basic
+                                        Auth</button>
+                                    <button class="btn btn-sm btn-outline-danger w-100"
+                                        onclick="testAuth('basic', true)">
+                                        <i class="bi bi-shield-x me-1"></i>Test Without Auth (401)
+                                    </button>
+                                </div>
                             </div>
-                            <div class="d-flex align-items-center mb-2">
-                                <span class="badge bg-primary me-2">POST</span>
-                                <code class="flex-grow-1">/api/e-invoice/generate-dynamic</code>
-                            </div>
-                            <div class="d-flex align-items-center mb-2">
-                                <span class="badge bg-primary me-2">POST</span>
-                                <code class="flex-grow-1">/api/e-invoice/validate</code>
-                            </div>
-                            <div class="d-flex align-items-center mb-2">
-                                <span class="badge bg-primary me-2">POST</span>
-                                <code class="flex-grow-1">/api/e-invoice/cancel</code>
+                        </div>
+
+                        <!-- Bearer / OAuth -->
+                        <div class="col-md-12">
+                            <div class="card bg-secondary border-0">
+                                <div class="card-body">
+                                    <h5 class="card-title text-success"><i class="bi bi-shield-check me-2"></i>Bearer /
+                                        OAuth 2.0</h5>
+                                    <p class="card-text small text-muted">1. Login to get a token. 2. Use token to
+                                        access protected route.</p>
+
+                                    <div class="d-flex gap-3 mb-3">
+                                        <button class="btn btn-success" onclick="authLogin('password')">Login (Password
+                                            Grant)</button>
+                                        <button class="btn btn-outline-success"
+                                            onclick="authLogin('client_credentials')">Login (Client Creds)</button>
+                                    </div>
+
+                                    <div class="input-group mb-3">
+                                        <span class="input-group-text bg-dark border-secondary text-light">Token</span>
+                                        <input type="text" class="form-control bg-dark text-light border-secondary"
+                                            id="bearerTokenInput" placeholder="Login to generate token...">
+                                    </div>
+
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <button class="btn btn-outline-light" onclick="testAuth('bearer')">Test Bearer
+                                            Route</button>
+                                        <button class="btn btn-outline-light" onclick="testAuth('oauth')">Test OAuth
+                                            Route</button>
+                                        <button class="btn btn-outline-danger ms-auto"
+                                            onclick="testAuth('bearer', true)">
+                                            <i class="bi bi-shield-x me-1"></i>Test Without Token (401)
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </section>
 
-        <!-- Filtering Documentation Section -->
-<section class="mb-5">
-    <h2 class="h3 mb-4"><i class="bi bi-filter me-2"></i>Advanced Filtering</h2>
-    
-    <div class="card bg-secondary border-0 mb-3">
-        <div class="card-body">
-            <h5 class="mb-3">Available Filter Parameters:</h5>
-            
-            <div class="row">
-                <div class="col-md-6">
-                    <h6>Basic Filters:</h6>
-                    <ul class="list-unstyled">
-                        <li><code>?status=Generated</code></li>
-                        <li><code>?supplyType=B2B</code></li>
-                        <li><code>?sellerState=29</code></li>
-                        <li><code>?buyerState=07</code></li>
-                        <li><code>?documentType=INV</code></li>
-                    </ul>
-                    
-                    <h6>Multiple Values (OR logic):</h6>
-                    <ul class="list-unstyled">
-                        <li><code>?supplyTypes=B2B,EXPWP,SEZWP</code></li>
-                        <li><code>?statuses=Generated,Cancelled</code></li>
-                    </ul>
-                </div>
-                
-                <div class="col-md-6">
-                    <h6>Special Filters:</h6>
-                    <ul class="list-unstyled">
-                        <li><code>?interstate=true</code></li>
-                        <li><code>?reverseCharge=false</code></li>
-                        <li><code>?totalValue=lt:1000</code></li>
-                        <li><code>?totalValue=gt:50000</code></li>
-                        <li><code>?search=INV/2024</code></li>
-                    </ul>
-                    
-                    <h6>Pagination & Sorting:</h6>
-                    <ul class="list-unstyled">
-                        <li><code>?page=2&limit=20</code></li>
-                        <li><code>?sortBy=totalValue&sortOrder=desc</code></li>
-                        <li><code>?dateFrom=2024-01-01&dateTo=2024-12-31</code></li>
-                        <li><code>?minValue=1000&maxValue=10000</code></li>
-                    </ul>
-                </div>
-            </div>
-            
-            <div class="mt-3">
-                <button class="btn btn-outline-light" onclick="testEndpoint('/api/e-invoice/filter-options')">
-                    <i class="bi bi-gear me-2"></i>View All Filter Options
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <h5 class="mt-4 mb-3">Filter Testing Examples:</h5>
-    <div class="d-flex flex-wrap gap-2">
-        <button class="btn btn-sm btn-outline-info" onclick="testEndpoint('/api/e-invoice/invoices?supplyType=B2B&status=Generated')">B2B Generated</button>
-        <button class="btn btn-sm btn-outline-info" onclick="testEndpoint('/api/e-invoice/invoices?interstate=true&sortBy=totalValue&sortOrder=desc')">Interstate High Value</button>
-        <button class="btn btn-sm btn-outline-info" onclick="testEndpoint('/api/e-invoice/invoices?supplyTypes=EXPWP,SEZWP')">Exports & SEZ</button>
-        <button class="btn btn-sm btn-outline-info" onclick="testEndpoint('/api/e-invoice/invoices?totalValue=gt:100000')">High Value Invoices</button>
-        <button class="btn btn-sm btn-outline-info" onclick="testEndpoint('/api/e-invoice/invoices?page=2&limit=5')">Page 2 (5 items)</button>
-    </div>
-</section>
-
-        <!-- Quick Testing Section -->
-        <section class="mb-5">
-            <h2 class="h3 mb-4"><i class="bi bi-lightning-charge me-2"></i>Quick Testing</h2>
-
-            <div class="card bg-secondary border-0">
-                <div class="card-body">
-                    <div class="d-flex flex-wrap gap-2 mb-3">
-                        <button class="btn btn-outline-light" onclick="testEndpoint('/health')">
-                    <i class="bi bi-heart-pulse me-2"></i>Health Check
-                </button>
-                        <button class="btn btn-outline-light" onclick="testEndpoint('/api/e-invoice/invoices')">
-                    <i class="bi bi-list-ul me-2"></i>View Invoices
-                </button>
-                        <button class="btn btn-outline-light" onclick="testEndpoint('/api/e-invoice/samples')">
-                    <i class="bi bi-collection me-2"></i>List Samples
-                </button>
-                        <button class="btn btn-outline-light" onclick="testEndpoint('/api/e-invoice/stats')">
-                    <i class="bi bi-graph-up me-2"></i>View Stats
-                </button>
-                <button class="btn btn-outline-light" onclick="testEndpoint('/api/e-invoice/filter-options')">
-                        <i class="bi bi-filter me-2"></i>Filter Options
-                </button>
-                        <button class="btn btn-outline-light" onclick="generateInvoice()">
-                    <i class="bi bi-plus-circle me-2"></i>Generate Invoice
-                </button>
-                    </div>
-
-                    <!-- API Response Display Area -->
-                    <div id="testResult" class="mt-3">
+                    <!-- Auth API Response Area -->
+                    <div id="authTestResult" class="mt-4" style="display: none;">
                         <div class="card bg-dark border-secondary">
                             <div class="card-header d-flex justify-content-between align-items-center">
-                                <span><i class="bi bi-code-slash me-2"></i>API Response</span>
-                                <button class="btn btn-sm btn-outline-light" onclick="copyResult()">
-                            <i class="bi bi-clipboard me-1"></i>Copy
-                        </button>
+                                <span><i class="bi bi-code-slash me-2"></i>Auth Response</span>
                             </div>
                             <div class="card-body p-0">
-                                <pre id="resultContent" class="text-light mb-0 p-3"
-                                    style="max-height: 400px; overflow-y: auto; background: #1a1d23; border-radius: 0 0 0.375rem 0.375rem; margin: 0;"></pre>
+                                <pre id="authResultContent" class="text-light mb-0 p-3"
+                                    style="max-height: 300px; overflow-y: auto; background: #1a1d23; border-radius: 0 0 0.375rem 0.375rem; margin: 0;"></pre>
                             </div>
                         </div>
                     </div>
-                </div>
+                </section>
             </div>
-        </section>
+
+            <!-- EDGE CASES TAB (Block 3) -->
+            <div class="tab-pane fade" id="edge" role="tabpanel">
+                <section class="mb-5">
+                    <h2 class="h3 mb-4"><i class="bi bi-bug me-2"></i>Edge Case Playground</h2>
+                    <p class="text-muted">Test tricky scenarios like Headers, CSRF, Token Expiry, and Session Fixation.
+                    </p>
+
+                    <div class="row g-4">
+
+                        <!-- 1. Headers & Content-Type -->
+                        <div class="col-lg-6">
+                            <div class="card bg-secondary border-0 h-100">
+                                <div class="card-header bg-dark border-secondary text-info">
+                                    <i class="bi bi-file-earmark-code me-2"></i>Headers & MIME Types
+                                </div>
+                                <div class="card-body">
+                                    <h6 class="text-light mb-3">Strict Content-Type Check</h6>
+                                    <div class="d-grid gap-2 mb-4">
+                                        <button class="btn btn-outline-success" onclick="testEdge('strictParams')">
+                                            ✅ valid JSON + CSRF
+                                        </button>
+                                        <button class="btn btn-outline-danger" onclick="testEdge('missingContentType')">
+                                            ❌ Missing Content-Type (400/415)
+                                        </button>
+                                        <button class="btn btn-outline-danger" onclick="testEdge('wrongAccept')">
+                                            ❌ Accept: application/xml (406)
+                                        </button>
+                                    </div>
+
+                                    <h6 class="text-light mb-3">Custom & Conditional Headers</h6>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-outline-danger"
+                                            onclick="testEdge('missingCustomHeader')">
+                                            ❌ Missing X-Tenant-Id (400)
+                                        </button>
+                                        <button class="btn btn-outline-warning" onclick="testEdge('guestAuthFail')">
+                                            ❌ Guest + Auth Header (400)
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Auth Edge Cases -->
+                        <div class="col-lg-6">
+                            <div class="card bg-secondary border-0 h-100">
+                                <div class="card-header bg-dark border-secondary text-warning">
+                                    <i class="bi bi-shield-x me-2"></i>Token & Scope Traps
+                                </div>
+                                <div class="card-body">
+                                    <h6 class="text-light mb-3">Bearer Token States</h6>
+                                    <div class="d-grid gap-2 mb-4">
+                                        <button class="btn btn-outline-danger" onclick="testEdge('expiredToken')">
+                                            ❌ Expired Token (401)
+                                        </button>
+                                        <button class="btn btn-outline-danger" onclick="testEdge('missingBearer')">
+                                            ❌ Missing 'Bearer ' Prefix (401)
+                                        </button>
+                                    </div>
+
+                                    <h6 class="text-light mb-3">Scope & Permissions</h6>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-outline-danger" onclick="testEdge('wrongScope')">
+                                            ❌ Read-Only Token vs Write API (403)
+                                        </button>
+                                        <button class="btn btn-outline-success" onclick="testEdge('validScope')">
+                                            ✅ Write Token vs Write API (200)
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3. Cookies & Sessions -->
+                        <div class="col-lg-12">
+                            <div class="card bg-secondary border-0">
+                                <div class="card-header bg-dark border-secondary text-primary">
+                                    <i class="bi bi-cookie me-2"></i>Cookies & Sessions
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <h6 class="text-light">Cookie Override</h6>
+                                            <p class="small text-muted">Server sets duplicate cookies. Last one should
+                                                win.</p>
+                                            <button class="btn btn-outline-light w-100"
+                                                onclick="testEdge('cookieOverride')">
+                                                Test Override Pattern
+                                            </button>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <h6 class="text-light">Session Fixation</h6>
+                                            <p class="small text-muted">Attempt to force a session ID.</p>
+                                            <button class="btn btn-outline-danger w-100"
+                                                onclick="testEdge('sessionFixation')">
+                                                Simulate Attack
+                                            </button>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <h6 class="text-light">Session Auth</h6>
+                                            <p class="small text-muted">Validate JSESSIONID name enforcement.</p>
+                                            <button class="btn btn-outline-warning w-100"
+                                                onclick="testEdge('strictSession')">
+                                                Test Session Access
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4. Rate Limiting -->
+                        <div class="col-lg-6">
+                            <div class="card bg-secondary border-0 h-100">
+                                <div class="card-header bg-dark border-secondary text-danger">
+                                    <i class="bi bi-speedometer2 me-2"></i>Rate Limiting
+                                </div>
+                                <div class="card-body">
+                                    <h6 class="text-light mb-3">Enforce Logic (Max 5/min)</h6>
+                                    <p class="small text-muted">Spam the button to trigger 429 Too Many Requests.</p>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-outline-light" onclick="testEdge('rateLimit5')">
+                                            🏎️ Spam Request 5x (Trigger 429)
+                                        </button>
+                                        <button class="btn btn-outline-info" onclick="testEdge('rateLimit1')">
+                                            🚗 Single Request (Check Headers)
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 5. Chaining & Reuse -->
+                        <div class="col-lg-6">
+                            <div class="card bg-secondary border-0 h-100">
+                                <div class="card-header bg-dark border-secondary text-success">
+                                    <i class="bi bi-link-45deg me-2"></i>Chaining / Token Reuse
+                                </div>
+                                <div class="card-body">
+                                    <h6 class="text-light mb-3">Login → Extract → Reuse</h6>
+                                    <p class="small text-muted">Simulate typical automation flow.</p>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-outline-success" onclick="testEdge('chainingFlow')">
+                                            🔗 Run Full Chain
+                                        </button>
+                                    </div>
+                                    <ul class="text-muted small mt-3 mb-0">
+                                        <li>Step 1: POST /login (Get Token)</li>
+                                        <li>Step 2: Extract Token from JSON</li>
+                                        <li>Step 3: GET /protected w/ Token</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Edge Case Response Area -->
+                    <div id="edgeTestResult" class="mt-4" style="display: none;">
+                        <div class="card bg-dark border-secondary">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <span><i class="bi bi-terminal me-2"></i>Test Result</span>
+                                <span class="badge bg-secondary" id="edgeStatusBadge">STATUS</span>
+                            </div>
+                            <div class="card-body p-0">
+                                <pre id="edgeResultContent" class="text-light mb-0 p-3"
+                                    style="max-height: 300px; overflow-y: auto; background: #1a1d23; border-radius: 0 0 0.375rem 0.375rem; margin: 0;"></pre>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Automation Reference Section -->
+                <section class="mb-5">
+                    <h2 class="h4 mb-4 text-info"><i class="bi bi-robot me-2"></i>Automation Ready Endpoints</h2>
+                    <p class="text-muted">Use these strict endpoints in your automation scripts to validate edge cases.
+                    </p>
+
+                    <div class="card bg-secondary border-0">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-dark table-hover mb-0" style="--bs-table-bg: transparent;">
+                                    <thead>
+                                        <tr>
+                                            <th>Method</th>
+                                            <th>Endpoint</th>
+                                            <th>Required Headers / Params</th>
+                                            <th>Edge Case Test</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- HEADERS & MIME TYPES -->
+                                        <tr>
+                                            <td><span class="badge bg-success">POST</span></td>
+                                            <td><code>/api/edge-cases/strict-post</code></td>
+                                            <td>
+                                                <small class="d-block text-muted">Content-Type: application/json</small>
+                                                <small class="d-block text-muted">X-CSRF-TOKEN: [token]</small>
+                                            </td>
+                                            <td>
+                                                <strong>Strict Content-Type Check</strong><br>
+                                                ✅ Valid Request (200)<br>
+                                                ❌ Missing Content-Type (400/415)
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="badge bg-primary">GET</span></td>
+                                            <td><code>/api/e-invoice/invoices</code></td>
+                                            <td>
+                                                <small class="d-block text-muted">Accept: application/xml</small>
+                                            </td>
+                                            <td>
+                                                <strong>Accept Header Trap</strong><br>
+                                                ❌ Requesting XML (406 Not Acceptable)
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="badge bg-primary">GET</span></td>
+                                            <td><code>/api/edge-cases/custom-header</code></td>
+                                            <td>
+                                                <small class="d-block text-muted">X-Tenant-Id: [missing]</small>
+                                            </td>
+                                            <td>
+                                                <strong>Custom Header</strong><br>
+                                                ❌ Missing X-Tenant-Id (400)
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="badge bg-primary">GET</span></td>
+                                            <td><code>/api/edge-cases/conditional-auth</code></td>
+                                            <td>
+                                                <small class="d-block text-muted">?type=guest</small>
+                                                <small class="d-block text-muted">Authorization: [any token]</small>
+                                            </td>
+                                            <td>
+                                                <strong>Guest Logic</strong><br>
+                                                ❌ Guest should not send Auth (400)
+                                            </td>
+                                        </tr>
+
+                                        <!-- TOKEN & SCOPE -->
+                                        <tr>
+                                            <td><span class="badge bg-primary">GET</span></td>
+                                            <td><code>/api/auth/test/bearer</code></td>
+                                            <td>
+                                                <small class="d-block text-muted">Authorization: Bearer
+                                                    expired-token</small>
+                                            </td>
+                                            <td>
+                                                <strong>Token Expiry</strong><br>
+                                                ❌ Expired Token (401)
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="badge bg-primary">GET</span></td>
+                                            <td><code>/api/auth/test/bearer</code></td>
+                                            <td>
+                                                <small class="d-block text-muted">Authorization: valid-token</small>
+                                            </td>
+                                            <td>
+                                                <strong>Token Format</strong><br>
+                                                ❌ Missing 'Bearer' Prefix (401)
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="badge bg-primary">GET</span></td>
+                                            <td><code>/api/edge-cases/scope-protected</code></td>
+                                            <td>
+                                                <small class="d-block text-muted">Authorization: Bearer
+                                                    read-only-token</small>
+                                            </td>
+                                            <td>
+                                                <strong>Scope Validation</strong><br>
+                                                ❌ Write access denied (403)
+                                            </td>
+                                        </tr>
+
+                                        <!-- COOKIES & SESSIONS -->
+                                        <tr>
+                                            <td><span class="badge bg-success">POST</span></td>
+                                            <td><code>/api/edge-cases/cookie-override</code></td>
+                                            <td>-</td>
+                                            <td><strong>Cookie Override</strong> (Last One Wins)</td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="badge bg-success">POST</span></td>
+                                            <td><code>/api/edge-cases/session-fixation</code></td>
+                                            <td>
+                                                <small class="d-block text-muted">?session_id=hacked</small>
+                                            </td>
+                                            <td><strong>Session Fixation</strong> Vulnerability</td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="badge bg-primary">GET</span></td>
+                                            <td><code>/api/auth/test/session</code></td>
+                                            <td>
+                                                <small class="d-block text-muted">Cookie: JSESSIONID=[valid]</small>
+                                            </td>
+                                            <td><strong>Session Auth</strong> Strict Name</td>
+                                        </tr>
+
+                                        <!-- NEW: RATE LIMITING -->
+                                        <tr>
+                                            <td><span class="badge bg-primary">GET</span></td>
+                                            <td><code>/api/edge-cases/rate-limit</code></td>
+                                            <td>-</td>
+                                            <td>
+                                                <strong>Rate Limiting</strong><br>
+                                                🚗 Check Headers (Limit/Remaining)<br>
+                                                🏎️ Spam >5/min → 429 Too Many Requests
+                                            </td>
+                                        </tr>
+
+                                        <!-- NEW: CHAINING -->
+                                        <tr>
+                                            <td><span class="badge bg-success">POST</span></td>
+                                            <td><code>/api/auth/login</code></td>
+                                            <td>
+                                                <small class="d-block text-muted">{"username":"admin",
+                                                    "password":"..."}</small>
+                                            </td>
+                                            <td>
+                                                <strong>Chain Step 1: Login</strong><br>
+                                                Returns <code>token</code> for reuse
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="badge bg-primary">GET</span></td>
+                                            <td><code>/api/auth/test/bearer</code></td>
+                                            <td>
+                                                <small class="d-block text-muted">Authorization: Bearer [token]</small>
+                                            </td>
+                                            <td>
+                                                <strong>Chain Step 3: Reuse</strong><br>
+                                                Proof of session continuity
+                                            </td>
+                                        </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- Quick Testing Section -->
+
 
         <!-- Important Notice -->
         <section class="mb-5">
