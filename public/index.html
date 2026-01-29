@@ -45,6 +45,12 @@
                             <i class="bi bi-exclamation-triangle me-2"></i>Edge Cases
                         </button>
                     </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link text-light" id="docs-tab" data-bs-toggle="tab" data-bs-target="#docs"
+                            type="button" role="tab">
+                            <i class="bi bi-book me-2"></i>Documentation
+                        </button>
+                    </li>
                 </ul>
 
             </div>
@@ -823,20 +829,258 @@
             </div>
         </div>
 
-        <!-- Quick Testing Section -->
+        <!-- DOCUMENTATION TAB -->
+        <div class="tab-pane fade" id="docs" role="tabpanel">
+            <div class="row">
+                <!-- Sidebar Navigation -->
+                <div class="col-lg-3 d-none d-lg-block">
+                    <div class="sticky-top pt-4" style="top: 80px; z-index: 1;">
+                        <nav id="docs-nav" class="nav flex-column nav-pills bg-secondary rounded p-3">
+                            <a class="nav-link text-light mb-2 active" href="#doc-intro">1. Introduction</a>
+                            <a class="nav-link text-light mb-2" href="#doc-auth">2. Authentication</a>
+                            <a class="nav-link text-light mb-2" href="#doc-endpoints">3. Core Endpoints</a>
+                            <a class="nav-link text-light mb-2" href="#doc-datamodel">4. Data Model</a>
+                            <a class="nav-link text-light mb-2" href="#doc-filtering">5. Filtering</a>
+                            <a class="nav-link text-light mb-2" href="#doc-edge">6. Edge Cases</a>
+                        </nav>
+                    </div>
+                </div>
 
+                <!-- Main Content -->
+                <div class="col-lg-9 pt-4">
 
-        <!-- Important Notice -->
-        <section class="mb-5">
-            <div class="alert alert-warning border-warning">
-                <h4 class="alert-heading"><i class="bi bi-exclamation-triangle me-2"></i>Important Notice</h4>
-                <p class="mb-0">
-                    <strong>This is a testing API only.</strong> All generated IRNs and QR codes are simulated and have
-                    no legal validity.
-                    Do not use for production purposes or actual GST filing.
-                </p>
+                    <!-- 1. Introduction -->
+                    <section id="doc-intro" class="mb-5">
+                        <h2 class="border-bottom border-secondary pb-2 mb-4">1. Introduction</h2>
+                        <p class="lead">Welcome to the E-Invoice Test API.</p>
+                        <p>This API is a high-fidelity Sandbox environment designed to mimic the standards and behaviors
+                            of the Indian Goods and Services Tax (GST) E-Invoicing system (IRP). It automates the
+                            generation of complex JSON structures, IRNs (Invoice Reference Numbers), and QR codes,
+                            allowing developers to test their ERP integrations without needing credentials for the live
+                            government portal.</p>
+                        <div class="alert alert-info border-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Goal:</strong> To provide a stable, zero-setup environment for testing Validation
+                            Logic, Parsing, and Error Handling.
+                        </div>
+                    </section>
+
+                    <!-- 2. Authentication -->
+                    <section id="doc-auth" class="mb-5">
+                        <h2 class="border-bottom border-secondary pb-2 mb-4">2. Authentication</h2>
+                        <p>The API follows a "Universal Auth" policy, meaning it accepts credentials in multiple formats
+                            to suit your preferred testing style.</p>
+
+                        <h5 class="mt-4 text-info">Supported Methods</h5>
+                        <div class="table-responsive">
+                            <table class="table table-dark table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Method</th>
+                                        <th>Header Key</th>
+                                        <th>Value Format</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="badge bg-primary">API Key</span></td>
+                                        <td><code>x-api-key</code></td>
+                                        <td><code>ei_demo_...</code></td>
+                                        <td>Simplest for scripts/Postman.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-success">Bearer</span></td>
+                                        <td><code>Authorization</code></td>
+                                        <td><code>Bearer [token]</code></td>
+                                        <td>Standard OAuth pattern.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-warning text-dark">Basic</span></td>
+                                        <td><code>Authorization</code></td>
+                                        <td><code>Basic [base64]</code></td>
+                                        <td>Legacy systems (User/Pass).</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <!-- 3. Core Endpoints -->
+                    <section id="doc-endpoints" class="mb-5">
+                        <h2 class="border-bottom border-secondary pb-2 mb-4">3. Core Endpoints</h2>
+
+                        <div class="card bg-secondary border-0 mb-4">
+                            <div class="card-header bg-dark border-secondary">
+                                <span class="badge bg-success me-2">POST</span>
+                                <code>/api/e-invoice/generate-dynamic</code>
+                            </div>
+                            <div class="card-body">
+                                <p>Generates a fresh invoice with a valid IRN and Signed QR Code.</p>
+                                <pre class="bg-dark p-3 rounded text-light"><code>{
+  "supplyType": "B2B",  // Options: B2B, EXPWP, SEZWP
+  "count": 1            // Number of invoices to return
+}</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="card bg-secondary border-0 mb-4">
+                            <div class="card-header bg-dark border-secondary">
+                                <span class="badge bg-primary me-2">GET</span> <code>/api/e-invoice/invoices</code>
+                            </div>
+                            <div class="card-body">
+                                <p>Retrieves a paginated list of all generated invoices.</p>
+                                <p class="text-muted small">Params: <code>?page=1</code>, <code>?limit=10</code>,
+                                    <code>?status=Generated</code></p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 4. Data Model -->
+                    <section id="doc-datamodel" class="mb-5">
+                        <h2 class="border-bottom border-secondary pb-2 mb-4">4. Data Model Deep Dive</h2>
+                        <p>Here is an explanation of the output from <code>/api/e-invoice/sample/1</code>:</p>
+
+                        <div class="accordion" id="dataModelAccordion">
+                            <div class="accordion-item bg-dark border-secondary">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button bg-secondary text-light collapsed" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="#dm1">
+                                        📦 TranDtls (Transaction Details)
+                                    </button>
+                                </h2>
+                                <div id="dm1" class="accordion-collapse collapse" data-bs-parent="#dataModelAccordion">
+                                    <div class="accordion-body">
+                                        <ul>
+                                            <li><code>TaxSch</code>: "GST" (Tax Scheme)</li>
+                                            <li><code>SupTyp</code>: "B2B", "B2C", "EXP" (Supply Type)</li>
+                                            <li><code>RegRev</code>: "Y"/"N" (Reverse Charge Applicable?)</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item bg-dark border-secondary">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button bg-secondary text-light collapsed" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="#dm2">
+                                        🏢 SellerDtls & BuyerDtls
+                                    </button>
+                                </h2>
+                                <div id="dm2" class="accordion-collapse collapse" data-bs-parent="#dataModelAccordion">
+                                    <div class="accordion-body">
+                                        <ul>
+                                            <li><code>Gstin</code>: 15-digit Tax ID (State Code + PAN + Entity Code)
+                                            </li>
+                                            <li><code>LglNm</code>: Legal Name of the entity</li>
+                                            <li><code>Pos</code>: Place of Supply (State Code)</li>
+                                            <li><code>Addr1</code>, <code>Loc</code>, <code>Pin</code>: Address details
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item bg-dark border-secondary">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button bg-secondary text-light collapsed" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="#dm3">
+                                        💰 ValDtls (Value Details)
+                                    </button>
+                                </h2>
+                                <div id="dm3" class="accordion-collapse collapse" data-bs-parent="#dataModelAccordion">
+                                    <div class="accordion-body">
+                                        <ul>
+                                            <li><code>AssVal</code>: Taxable Value</li>
+                                            <li><code>CgstVal</code>, <code>SgstVal</code>, <code>IgstVal</code>: Tax
+                                                Breakdowns</li>
+                                            <li><code>TotInvVal</code>: Final Invoice Value (inclusive of taxes)</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 5. Filtering -->
+                    <section id="doc-filtering" class="mb-5">
+                        <h2 class="border-bottom border-secondary pb-2 mb-4">5. Filtering & Search</h2>
+                        <p>Query parameters allow for powerful data slicing.</p>
+
+                        <h5 class="text-info">Basic Filtering</h5>
+                        <pre
+                            class="bg-dark p-3 rounded"><code>GET /api/e-invoice/invoices?status=Cancelled&state=27</code></pre>
+                        <ul>
+                            <li><code>status</code>: 'Generated' or 'Cancelled'</li>
+                            <li><code>state</code>: 2-digit State Code (e.g., '27' for Maharashtra)</li>
+                            <li><code>supplyType</code>: 'B2B', 'SEZWP', etc.</li>
+                        </ul>
+
+                        <h5 class="text-info mt-4">Advanced Search</h5>
+                        <pre class="bg-dark p-3 rounded"><code>GET /api/e-invoice/search?q=Mumbai</code></pre>
+                        <p>The global search parameter <code>q</code> scans across:</p>
+                        <ul>
+                            <li>Legal Name (Seller/Buyer)</li>
+                            <li>GSTIN</li>
+                            <li>IRN</li>
+                            <li>City/Location</li>
+                        </ul>
+                    </section>
+
+                    <!-- 6. Edge Cases -->
+                    <section id="doc-edge" class="mb-5">
+                        <h2 class="border-bottom border-secondary pb-2 mb-4">6. Edge Cases & Errors</h2>
+                        <p>We simulate specific failure scenarios to help you build robust error handling.</p>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="border border-danger rounded p-3">
+                                    <h6 class="text-danger">Rate Limiting (429)</h6>
+                                    <p class="small text-muted mb-0">If you exceed 5 requests/minute on specific
+                                        endpoints, you get a <code>429 Too Many Requests</code>.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="border border-danger rounded p-3">
+                                    <h6 class="text-danger">Payload Too Large (413)</h6>
+                                    <p class="small text-muted mb-0">Sending a JSON body > 100kb will trigger a
+                                        <code>413</code> error, simulating server protection limits.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="border border-danger rounded p-3">
+                                    <h6 class="text-danger">Not Acceptable (406)</h6>
+                                    <p class="small text-muted mb-0">Requesting <code>Accept: application/xml</code>
+                                        will fail because we only support JSON.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="border border-danger rounded p-3">
+                                    <h6 class="text-danger">Strict Methods (405)</h6>
+                                    <p class="small text-muted mb-0">Sending POST to a GET-only endpoint yields
+                                        <code>405 Method Not Allowed</code>.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                </div>
             </div>
-        </section>
+        </div>
+    </div>
+
+    <!-- Quick Testing Section -->
+
+
+    <!-- Important Notice -->
+    <section class="mb-5">
+        <div class="alert alert-warning border-warning">
+            <h4 class="alert-heading"><i class="bi bi-exclamation-triangle me-2"></i>Important Notice</h4>
+            <p class="mb-0">
+                <strong>This is a testing API only.</strong> All generated IRNs and QR codes are simulated and have
+                no legal validity.
+                Do not use for production purposes or actual GST filing.
+            </p>
+        </div>
+    </section>
     </div>
 
     <!-- Footer -->
