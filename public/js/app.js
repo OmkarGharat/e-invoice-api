@@ -260,6 +260,40 @@ async function loadSamples() {
 window.addEventListener('load', function () {
     console.log('E-Invoice API UI loaded successfully');
 
+    // Custom Scrollspy using IntersectionObserver for Documentation
+    const docsTab = document.getElementById('docs-tab');
+    if (docsTab) {
+        docsTab.addEventListener('shown.bs.tab', function () {
+            const observerOptions = {
+                root: null,
+                rootMargin: '-20% 0px -60% 0px', // Trigger when section is near top
+                threshold: 0
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const id = entry.target.getAttribute('id');
+                        // Remove active from all
+                        document.querySelectorAll('#docs-nav .nav-link').forEach(link => {
+                            link.classList.remove('active');
+                        });
+                        // Add active to current
+                        const currentLink = document.querySelector(`#docs-nav .nav-link[href="#${id}"]`);
+                        if (currentLink) {
+                            currentLink.classList.add('active');
+                        }
+                    }
+                });
+            }, observerOptions);
+
+            // Observe all documentation sections
+            document.querySelectorAll('section[id^="doc-"]').forEach((section) => {
+                observer.observe(section);
+            });
+        });
+    }
+
     // Fetch Credentials for Auto-Auth from the backend
     fetch('/api/auth/credentials')
         .then(res => res.json())
@@ -283,8 +317,8 @@ window.addEventListener('load', function () {
         return new bootstrap.Tooltip(tooltipTriggerEl)
     })
 
-    // Auto-test health endpoint after a short delay
-    setTimeout(() => {
+    // Auto-test health endpoint after a short delay - REMOVED to save space
+    /* setTimeout(() => {
         const testResult = document.getElementById('testResult');
         const resultContent = document.getElementById('resultContent');
 
@@ -292,7 +326,7 @@ window.addEventListener('load', function () {
             testResult.style.display = 'block';
             resultContent.innerHTML = '<div class="text-center text-muted"><i class="bi bi-info-circle me-2"></i>Click any test button to see API responses here</div>';
         }
-    }, 1000);
+    }, 1000); */
 });
 
 // ==================== AUTH FUNCTIONS ====================
