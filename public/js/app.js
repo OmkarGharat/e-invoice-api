@@ -260,6 +260,12 @@ async function loadSamples() {
 window.addEventListener('load', function () {
     console.log('E-Invoice API UI loaded successfully');
 
+    // Force page to start at top on refresh
+    if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
+
     // Reset scroll position when switching tabs
     document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(tab => {
         tab.addEventListener('shown.bs.tab', () => {
