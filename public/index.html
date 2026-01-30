@@ -1181,34 +1181,100 @@
                             <h2 class="border-bottom border-secondary pb-2 mb-4">6. Edge Cases & Errors</h2>
                             <p>We simulate specific failure scenarios to help you build robust error handling.</p>
 
+                            <!-- Detailed Edge Cases -->
+                            <div class="row g-4 mb-4">
+                                <!-- Headers & MIME Types -->
+                                <div class="col-lg-6">
+                                    <div class="card bg-secondary border-0 h-100">
+                                        <div class="card-header bg-dark border-secondary">
+                                            <h5 class="mb-0 text-info"><i
+                                                    class="bi bi-file-earmark-code me-2"></i>Headers & MIME Types</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <h6 class="text-light fw-bold mb-3">Strict Content-Type Check</h6>
+                                            <div class="d-flex flex-column gap-2 mb-4">
+                                                <div class="text-success small"><i
+                                                        class="bi bi-check-square-fill me-2"></i>valid JSON + CSRF</div>
+                                                <div class="text-danger small"><i class="bi bi-x-lg me-2"></i>Missing
+                                                    Content-Type (400/415)</div>
+                                                <div class="text-danger small"><i class="bi bi-x-lg me-2"></i>Accept:
+                                                    application/xml (406)</div>
+                                            </div>
+
+                                            <h6 class="text-light fw-bold mb-3">Custom & Conditional Headers</h6>
+                                            <div class="d-flex flex-column gap-2">
+                                                <div class="text-danger small"><i class="bi bi-x-lg me-2"></i>Missing
+                                                    X-Tenant-Id (400)</div>
+                                                <div class="text-danger small"><i class="bi bi-x-lg me-2"></i>Guest +
+                                                    Auth Header (400)</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Token & Scope Traps -->
+                                <div class="col-lg-6">
+                                    <div class="card bg-secondary border-0 h-100">
+                                        <div class="card-header bg-dark border-secondary">
+                                            <h5 class="mb-0 text-warning"><i
+                                                    class="bi bi-shield-lock-fill me-2"></i>Token & Scope Traps</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <h6 class="text-light fw-bold mb-3">Bearer Token States</h6>
+                                            <div class="d-flex flex-column gap-2 mb-4">
+                                                <div class="text-danger small"><i class="bi bi-x-lg me-2"></i>Expired
+                                                    Token (401)</div>
+                                                <div class="text-danger small"><i class="bi bi-x-lg me-2"></i>Missing
+                                                    'Bearer ' Prefix (401)</div>
+                                            </div>
+
+                                            <h6 class="text-light fw-bold mb-3">Scope & Permissions</h6>
+                                            <div class="d-flex flex-column gap-2">
+                                                <div class="text-danger small"><i class="bi bi-x-lg me-2"></i>Read-Only
+                                                    Token vs Write API (403)</div>
+                                                <div class="text-success small"><i
+                                                        class="bi bi-check-square-fill me-2"></i>Write Token vs Write
+                                                    API (200)</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <div class="border border-danger rounded p-3">
-                                        <h6 class="text-danger">Rate Limiting (429)</h6>
-                                        <p class="small text-muted mb-0">If you exceed 5 requests/minute on specific
-                                            endpoints, you get a <code>429 Too Many Requests</code>.</p>
+                                    <div class="border border-danger rounded p-3 h-100">
+                                        <h6 class="text-danger fw-bold mb-2">Rate Limiting (429)</h6>
+                                        <p class="text-secondary small mb-0">If you exceed 5 requests/minute on specific
+                                            endpoints, you get a <span
+                                                class="badge bg-dark border border-secondary text-info">429 Too Many
+                                                Requests</span>.</p>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="border border-danger rounded p-3">
-                                        <h6 class="text-danger">Payload Too Large (413)</h6>
-                                        <p class="small text-muted mb-0">Sending a JSON body > 100kb will trigger a
-                                            <code>413</code> error, simulating server protection limits.
+                                    <div class="border border-danger rounded p-3 h-100">
+                                        <h6 class="text-danger fw-bold mb-2">Payload Too Large (413)</h6>
+                                        <p class="text-secondary small mb-0">Sending a JSON body > 100kb will trigger a
+                                            <span class="badge bg-dark border border-secondary text-info">413</span>
+                                            error, simulating server protection limits.
                                         </p>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="border border-danger rounded p-3">
-                                        <h6 class="text-danger">Not Acceptable (406)</h6>
-                                        <p class="small text-muted mb-0">Requesting <code>Accept: application/xml</code>
+                                    <div class="border border-danger rounded p-3 h-100">
+                                        <h6 class="text-danger fw-bold mb-2">Not Acceptable (406)</h6>
+                                        <p class="text-secondary small mb-0">Requesting <span
+                                                class="badge bg-dark border border-secondary text-info">Accept:
+                                                application/xml</span>
                                             will fail because we only support JSON.</p>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="border border-danger rounded p-3">
-                                        <h6 class="text-danger">Strict Methods (405)</h6>
-                                        <p class="small text-muted mb-0">Sending POST to a GET-only endpoint yields
-                                            <code>405 Method Not Allowed</code>.
+                                    <div class="border border-danger rounded p-3 h-100">
+                                        <h6 class="text-danger fw-bold mb-2">Strict Methods (405)</h6>
+                                        <p class="text-secondary small mb-0">Sending POST to a GET-only endpoint yields
+                                            <span class="badge bg-dark border border-secondary text-info">405 Method Not
+                                                Allowed</span>.
                                         </p>
                                     </div>
                                 </div>
