@@ -263,7 +263,7 @@ window.addEventListener('load', function () {
     // Reset scroll position when switching tabs
     document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(tab => {
         tab.addEventListener('shown.bs.tab', () => {
-            window.scrollTo({ top: 0, behavior: 'auto' });
+            window.scrollTo({ top: 0, behavior: 'instant' });
         });
     });
 
