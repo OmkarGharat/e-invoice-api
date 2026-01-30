@@ -260,6 +260,14 @@ async function loadSamples() {
 window.addEventListener('load', function () {
     console.log('E-Invoice API UI loaded successfully');
 
+    // Reset scroll position when switching tabs
+    document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(tab => {
+        tab.addEventListener('shown.bs.tab', () => {
+            window.scrollTo({ top: 0, behavior: 'auto' });
+        });
+    });
+
+
     // Custom Scrollspy using IntersectionObserver for Documentation
     const docsTab = document.getElementById('docs-tab');
     if (docsTab) {
